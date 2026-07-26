@@ -127,39 +127,61 @@ if exist "C:\Installers\TallyPrimeSetup.exe" start "" "C:\Installers\TallyPrimeS
 
 # --- First-login instructions on the desktop ---------------------------------
 @"
-WELCOME — READ ME FIRST
-=======================
+WELCOME! READ THIS FIRST (5 minutes)
+====================================
 
-Almost everything is pre-installed. On this FIRST login only:
+This is your accounting computer. Everything you need is already here.
+Nothing you save is ever lost - even when the computer is switched off,
+and a backup copy is taken automatically every night at 2 AM.
 
-1. The TallyPrime installer opens by itself — click Install (keep defaults),
-   then set the DATA folder to  C:\TallyData
-   (If it did not open, double-click "Download TallyPrime" on the desktop.)
-2. Open TallyPrime and activate your Tally license (serial + Tally.net login).
-3. Optional: double-click "Claude Code" on the desktop and sign in to your
-   Anthropic account — after that, Claude runs on this machine any time.
+DOING THIS FOR THE FIRST TIME? Just 2 steps:
 
-Any time you want to verify the machine: double-click "Check System Health" —
-it prints PASS/FAIL for every component and how to fix anything broken.
+  STEP 1: A Tally installation window opens by itself.
+          Click Install and keep clicking Next.
+          One important thing: when it asks where to keep DATA,
+          choose:  C:\TallyData
 
-Only when you first need each portal (they require YOUR portal login to
-download their signer, so this cannot be pre-installed — one double-click):
-- GST with DSC : log in to GST -> Register/Update DSC -> download emSigner.
-- TRACES (TDS) : Downloads -> TRACES WebSigner. (32-bit Java is installed.)
-- MCA (companies/LLP) : install emBridge from the "DSC Setup" folder link.
-- Your DSC token's driver: run the matching link in "DSC Setup" once.
+  STEP 2: Open Tally (icon on this desktop) and enter your
+          Tally serial number and Tally.net login to activate it.
 
-USING YOUR DSC (USB TOKEN) FROM HOME:
-- Keep the token plugged into your LOCAL computer.
-- From a Windows PC: Remote Desktop -> Local Resources -> enable Smart cards.
-- From a Mac or browser: use VirtualHere (free for one device).
-- Many filings need no DSC: GST/Income-tax accept Aadhaar-OTP (EVC)
-  for proprietors and partnerships.
+That's it. You are ready.
 
-Already installed: Chrome, Adobe Reader, 7-Zip, Notepad++, Java 8 (32+64 bit),
-Git, Node.js, Claude Code, Amazon DCV. Timezone is IST.
-ALL data persists across stop/start and is snapshotted daily.
-Keep every Tally company under C:\TallyData.
+WHERE IS EVERYTHING?
+  - Tally            : icon on this desktop
+  - Government sites : "Govt Portals" folder on this desktop
+                       (GST, Income Tax, TDS, PF, ESIC, MCA - just double-click)
+  - Chrome browser   : on this desktop
+  - Your data        : always keep it in C:\TallyData
+
+IS SOMETHING NOT WORKING?
+  Double-click "Check System Health" on this desktop. Every line will say
+  PASS (good) or FAIL (problem + how to fix). Show the result to whoever
+  manages this computer for you.
+
+SIGNING WITH YOUR DSC (the USB token):
+  The token stays plugged into YOUR computer at home - it reaches this
+  computer over the internet:
+  - From a Windows laptop: connect with the Remote Desktop app and switch on
+    "Local Resources -> Smart cards" in its settings before connecting.
+  - From a Mac: use the VirtualHere program (it is in the "DSC Setup"
+    folder here; the server part goes on your Mac - one-time setup).
+  - No DSC needed for many filings: GST and Income-tax accept an OTP on
+    your Aadhaar-linked mobile (proprietorship/partnership only).
+  First time only: install your token's driver from the "DSC Setup" folder
+  (pick the link matching your token brand: ePass2003 / ProxKey / mToken).
+
+FIRST TIME ON EACH GOVERNMENT SITE (one double-click each, only when needed):
+  - GST with DSC : log in to GST -> Register/Update DSC -> download emSigner
+  - TDS (TRACES) : Downloads -> TRACES WebSigner
+  - MCA          : "MCA emBridge signer" link in the "DSC Setup" folder
+  (These sites only give their signing tool AFTER you log in with your own
+   account - that is why they could not be pre-installed for you.)
+
+EXTRA: "Claude Code" on this desktop is an AI assistant that can help you
+right on this computer - double-click it and sign in once.
+
+Don't worry about switching off - this computer turns itself off when you
+stop using it, and everything will be exactly here when you come back.
 "@ | Out-File "$desktop\READ-ME-FIRST.txt" -Encoding ascii
 
 "Bootstrap finished $(Get-Date -Format o)" | Out-File "C:\bootstrap-complete.txt" -Encoding ascii

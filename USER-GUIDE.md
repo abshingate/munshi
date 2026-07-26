@@ -1,0 +1,109 @@
+# Your Accounting Computer — Simple Guide
+
+*(Give this file to the person who will use the machine. No computer expertise needed.)*
+
+## What is this?
+
+You have a **Windows computer that lives on the internet** (in Amazon's data
+center in Mumbai). Tally and everything you need for GST, PF, PT and Income-tax
+work is already on it.
+
+Think of it like a shop you rent by the hour:
+
+- When you **turn it on**, you pay about **Rs. 12 per hour**.
+- When you **turn it off**, you pay almost nothing (about Rs. 750/month just to
+  keep your data safe).
+- **Nothing is ever lost** when you turn it off. Your Tally data, your files,
+  your bookmarks — everything is exactly where you left it, and a backup copy
+  is taken automatically every night at 2 AM.
+
+## How to use it (every time)
+
+There are numbered buttons in this folder. Just double-click them.
+
+**Step 1 — Turn it on.** Double-click **`1 - Turn ON Tally Computer`**.
+A black window opens and after about 2 minutes it shows you an address like:
+
+    https://3.111.198.54:8443
+
+**Step 2 — Open that address in your browser** (Chrome or Safari). Type it
+exactly as shown. ⚠️ The address **changes every time** you turn the computer
+on — always use the one from the black window, not an old bookmark.
+
+Your browser will show a scary warning like *"Your connection is not private"*.
+**This is normal and safe** — it appears because this is your own private
+computer, not a public website. Click **Advanced → Proceed / Continue**.
+
+**Step 3 — Log in.** Username is `Administrator`. For the password,
+double-click **`2 - Get Password`** — it prints the password. (Save it in your
+phone's notes the first time; it never changes.)
+
+**Step 4 — Do your work.** Tally is on the desktop. Your GST, Income-tax,
+TRACES, EPFO, ESIC and MCA websites are in the **"Govt Portals"** folder on the
+desktop. Always keep your Tally company data in the **C:\TallyData** folder.
+
+**Step 5 — Turn it off when done.** Double-click **`5 - Turn OFF Tally Computer`**.
+(If you forget — don't worry. The computer switches itself off after about an
+hour of sitting idle, and emails you that it did.)
+
+## Signing with your DSC (the USB pen-drive-like token)
+
+Your DSC stays plugged into **your own computer at home** — not the cloud one.
+It gets "beamed" to the cloud computer:
+
+- **From a Windows laptop:** connect using the Remote Desktop app instead of
+  the browser. Before connecting, in the app's settings turn on
+  *Local Resources → Smart cards*. That's it — the portal will see your token.
+- **From a Mac:** use the VirtualHere app (one-time setup — ask whoever set
+  this system up for you, it takes 10 minutes; the steps are in the "DSC Setup"
+  folder on the cloud computer's desktop).
+- **Often you don't need the DSC at all:** GST and Income-tax accept an
+  **OTP on your Aadhaar-linked mobile** instead, if your firm is a
+  proprietorship or partnership. Companies and LLPs must use the DSC.
+
+## Is everything working? (health check)
+
+Two ways, both safe to run any time:
+
+- On your Mac: double-click **`3 - Check Everything OK`**.
+- On the cloud computer's desktop: double-click **"Check System Health"**.
+
+Every line says **PASS** (good), **WARN** (fine, just information) or **FAIL**
+(a problem — the same line tells you the fix, or show it to whoever manages
+this for you).
+
+## If you cannot connect
+
+9 times out of 10 the reason is: your internet company quietly changed your
+home connection's address, and the cloud computer only trusts *your* address
+(that's a security feature, not a bug).
+
+**The fix is one double-click:** **`4 - Fix Connection Problem`**. Wait for it
+to finish, then try Step 1 again.
+
+## Common questions
+
+**I forgot to turn it off — will I get a huge bill?**
+No. It turns itself off after ~1 hour of inactivity and emails you. There is
+also a monthly budget alarm: if spending ever heads past about Rs. 2,000, you
+get a warning email long before it becomes a problem.
+
+**I deleted something in Tally by mistake!**
+A backup of the whole computer is taken every night at 2 AM (the last 14 nights
+are kept). Whoever manages this for you can bring back yesterday's copy.
+
+**Can I use it from my phone or another computer?**
+Yes — from anywhere. You only need the address and the password. But the
+"turn on / turn off" buttons live on the main Mac. (An administrator can also
+start it from the AWS phone app.)
+
+**The Tally screen asks about a license?**
+Tally's license was activated once during setup with your serial number. If it
+ever asks again, choose "Reactivate" and log in with your Tally.net ID.
+
+## The two rules
+
+1. **Never** log in to the AWS website and delete ("terminate") anything —
+   that is the only way to truly lose data, and it is deliberately locked, so
+   you'd have to try hard. Just don't.
+2. When in doubt, run **`3 - Check Everything OK`** and read what it says.

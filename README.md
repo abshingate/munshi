@@ -21,6 +21,16 @@ and all data persists forever and is snapshotted daily.
 | Claude | Git, Node.js LTS and the Claude Code CLI pre-installed — run `claude` on the VM |
 | Health checks | `./scripts/check.sh` locally + "Check System Health" on the VM desktop |
 
+## Two audiences, two documents
+
+- **This README** is for the (technical) person who deploys and maintains the setup.
+- **[USER-GUIDE.md](USER-GUIDE.md)** is for the person who *uses* the machine —
+  written in plain language, no jargon. Give them that file and the numbered
+  `*.command` buttons in this folder (`1 - Turn ON Tally Computer`, `2 - Get
+  Password`, `3 - Check Everything OK`, `4 - Fix Connection Problem`, `5 - Turn
+  OFF Tally Computer`) — each is a double-click, no terminal needed. On the VM
+  itself, `READ-ME-FIRST.txt` on the desktop covers first-time setup the same way.
+
 ## Prerequisites
 
 - An AWS account and the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) configured (`aws configure`)
