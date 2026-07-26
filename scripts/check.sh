@@ -67,10 +67,18 @@ else
   echo "== Connectivity (from this machine) =="
   IP=$(aws ec2 describe-instances --region "$REGION" --instance-ids "$ID" \
     --query 'Reservations[0].Instances[0].PublicIpAddress' --output text)
-  nc -z -G 5 "$IP" 8443 >/dev/null 2>&1 && pass "DCV browser port 8443 reachable (https://$IP:8443)" \
-    || fail "Port 8443 unreachable — has your home IP changed? Update allowed_cidr + terraform apply"
-  nc -z -G 5 "$IP" 3389 >/dev/null 2>&1 && pass "RDP port 3389 reachable" \
-    || fail "Port 3389 unreachable — has your home IP changed? Update allowed_cidr + terraform apply"
+  # nc's connect-timeout flag differs: -G on macOS, -w on Linux (CloudShell)
+  NCT="-w"; [[ "$(uname)" == "Darwin" ]] && NCT="-G"
+  if [[ "$(uname)" == "Darwin" ]]; then
+    nc -z $NCT 5 "$IP" 8443 >/dev/null 2>&1 && pass "DCV browser port 8443 reachable (https://$IP:8443)" \
+      || fail "Port 8443 unreachable — has your home IP changed? Run scripts/fix-ip.sh"
+    nc -z $NCT 5 "$IP" 3389 >/dev/null 2>&1 && pass "RDP port 3389 reachable" \
+      || fail "Port 3389 unreachable — has your home IP changed? Run scripts/fix-ip.sh"
+  else
+    # CloudShell runs inside AWS — its own IP is not in allowed_cidr, so an
+    # unreachable port here proves nothing about the user's access. Skip.
+    warn "Port reachability skipped (only meaningful from the user's own computer)"
+  fi
 
   PING=$(aws ssm describe-instance-information --region "$REGION" \
     --filters "Key=InstanceIds,Values=$ID" --query 'InstanceInformationList[0].PingStatus' --output text 2>/dev/null)

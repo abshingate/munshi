@@ -30,10 +30,38 @@ everything needed by itself. It will ask you for at most three things:
 
 It's safe to run again any time — it skips what's already done.
 
+*If the Mac complains the button "can't be opened because it is from an
+unidentified developer": don't worry — right-click (or hold Control and click)
+the button and choose **Open**. You only have to do this once per button.*
+
 - If this folder was **copied from another computer**, it just connects and
   you're done.
 - If this is a **brand-new setup**, it asks before creating the cloud computer
   (and tells you the cost first).
+
+## No Mac? Set it up entirely in the browser
+
+You can create the cloud computer without installing ANYTHING on any computer,
+using a terminal that lives inside the AWS website itself:
+
+1. Log in to **aws.amazon.com**. In the top-right corner, set the region to
+   **Mumbai (ap-south-1)**.
+2. Click the **CloudShell icon** in the top bar (it looks like `>_`).
+   A black window opens at the bottom — that's a computer AWS gives you for
+   free, already logged in to your account.
+3. In that window's menu click **Actions → Upload file** and upload the
+   `TallyCloud-new.zip` file you were given.
+4. Copy-paste these two lines and press Enter:
+
+       unzip -o TallyCloud-new.zip -d tally && cd tally
+       bash scripts/cloudshell-deploy.sh
+
+5. Answer its questions (it tells you exactly where to find each answer) and
+   it builds everything, then prints your address, and how to get the password.
+
+After that, day-to-day you don't need CloudShell: turn the machine on/off from
+the AWS Console (EC2 → select the instance → Start / Stop) and use it in any
+browser with the address and password.
 
 ## Using it from other devices
 

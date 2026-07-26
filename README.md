@@ -153,6 +153,17 @@ cp terraform.tfvars.example terraform.tfvars   # set their own allowed_cidr
 terraform init && terraform apply
 ```
 
+**No git, no Mac, no local tools at all?** Two helpers:
+
+- `./scripts/make-share-zip.sh` builds `TallyCloud-new.zip` on your Desktop —
+  a clean, secret-free package you can email/WhatsApp to anyone. (With the
+  `operator` argument it instead packages *your* deployment — state and key
+  included — for a trusted person to operate the same machine.)
+- The recipient can deploy **entirely in the browser** via AWS CloudShell:
+  upload the zip there and run `bash scripts/cloudshell-deploy.sh`. No local
+  installs of any kind; the USER-GUIDE has the click-by-click steps. All the
+  `scripts/*.sh` helpers are Linux-compatible and work inside CloudShell too.
+
 To *operate* an existing deployment from a second computer, copy the whole
 folder (including `terraform.tfstate` and the `.pem` file) to it and run
 button `0` there — it installs tools and links up without deploying anything.
