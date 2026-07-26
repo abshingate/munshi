@@ -10,7 +10,7 @@
 #        unzip -o TallyCloud-new.zip -d tally && cd tally
 #        bash scripts/cloudshell-deploy.sh
 set -uo pipefail
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/.." || exit 1
 
 echo "==> Checking Terraform (installing a private copy if needed)"
 if ! command -v terraform >/dev/null 2>&1; then

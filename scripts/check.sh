@@ -4,7 +4,7 @@
 # machine is running — executes the on-VM health check remotely via SSM.
 # Exit code: 0 = all good, 1 = issues found (printed in red).
 set -uo pipefail
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/.." || exit 1
 
 RED=$'\033[31m'; GRN=$'\033[32m'; YLW=$'\033[33m'; RST=$'\033[0m'
 ISSUES=0

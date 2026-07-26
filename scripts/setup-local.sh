@@ -4,7 +4,7 @@
 # folder was copied from another machine, state file included).
 # Safe to run again any time — it skips whatever is already done.
 set -uo pipefail
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/.." || exit 1
 
 step() { echo ""; echo "==> $1"; }
 
