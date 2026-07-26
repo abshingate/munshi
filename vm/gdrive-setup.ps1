@@ -32,10 +32,22 @@ if (-not ($remotes -match "^gdrive:")) {
     }
 }
 
+# Which folder in Drive to sync — root-level "TallyCloud" by default, but any
+# path works (e.g. Accounts/Tally). Re-running this script lets you change it.
+$folderFile = "C:\ProgramData\rclone\sync-folder.txt"
+$default = "TallyCloud"
+if (Test-Path $folderFile) { $default = (Get-Content $folderFile -Raw).Trim() }
 Write-Host ""
-Write-Host "Doing the first sync (this creates a 'TallyCloud' folder in your Google Drive)..."
-cmd /c "`"$rclone`" --config `"$conf`" mkdir gdrive:TallyCloud 2>nul" | Out-Null
-& $rclone --config $conf bisync "gdrive:TallyCloud" $local --create-empty-src-dirs --resync
+$folder = Read-Host "Folder in your Google Drive to sync (can be a path like Accounts/Tally) [$default]"
+if ([string]::IsNullOrWhiteSpace($folder)) { $folder = $default }
+$folder = $folder.Trim().Trim("/").Replace("\", "/")
+$folder | Out-File $folderFile -Encoding ascii
+$remote = "gdrive:$folder"
+
+Write-Host ""
+Write-Host "Doing the first sync (this creates '$folder' in your Google Drive if it doesn't exist)..."
+cmd /c "`"$rclone`" --config `"$conf`" mkdir `"$remote`" 2>nul" | Out-Null
+& $rclone --config $conf bisync $remote $local --create-empty-src-dirs --resync
 if ($LASTEXITCODE -ne 0) {
     Write-Host ""
     Write-Host "The first sync did not complete - check the messages above and run this again."
@@ -43,11 +55,11 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 schtasks /Create /TN "TallyCloudDriveSync" /SC MINUTE /MO 5 /RU SYSTEM /RL HIGHEST /F `
-    /TR "`"$rclone`" --config $conf bisync gdrive:TallyCloud C:\TallyData\Drive --create-empty-src-dirs" | Out-Null
+    /TR "`"$rclone`" --config $conf bisync `"$remote`" C:\TallyData\Drive --create-empty-src-dirs" | Out-Null
 
 Write-Host ""
 Write-Host "Done! From now on:"
-Write-Host "  - Anything you put in the 'TallyCloud' folder of your Google Drive"
+Write-Host "  - Anything you put in the '$folder' folder of your Google Drive"
 Write-Host "    (from any phone or computer) appears in C:\TallyData\Drive here."
 Write-Host "  - Anything you put in C:\TallyData\Drive appears in your Google Drive."
 Write-Host "  - Syncs every 5 minutes, both ways."
