@@ -17,6 +17,32 @@ Think of it like a shop you rent by the hour:
   your bookmarks — everything is exactly where you left it, and a backup copy
   is taken automatically every night at 2 AM.
 
+## Setting up a new Mac (one time only)
+
+Got this folder on a new Mac (or setting up for the first time)? Double-click
+**`0 - First Time Setup (run once)`** and follow what it says. It installs
+everything needed by itself. It will ask you for at most three things:
+
+1. Your **Mac login password** (typing is invisible — that's normal).
+2. Your **two AWS keys** — ask whoever manages your AWS account for an
+   "Access Key ID" and "Secret Access Key".
+3. Your **email** for warning messages.
+
+It's safe to run again any time — it skips what's already done.
+
+- If this folder was **copied from another computer**, it just connects and
+  you're done.
+- If this is a **brand-new setup**, it asks before creating the cloud computer
+  (and tells you the cost first).
+
+## Using it from other devices
+
+- **Any computer, tablet or phone browser**: once the machine is on, the
+  address and password work from anywhere — buttons not needed.
+- **Turning it on/off without the Mac**: install the "AWS Console" app on your
+  phone (or aws.amazon.com in any browser), log in, go to EC2, pick the
+  instance and choose Start / Stop. Nothing to install on the device.
+
 ## How to use it (every time)
 
 There are numbered buttons in this folder. Just double-click them.

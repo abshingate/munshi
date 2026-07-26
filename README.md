@@ -134,13 +134,23 @@ click in the desktop "DSC Setup" folder, first time only.
 
 ## Sharing this setup
 
-This repo is generic — anyone can use it in their own AWS account:
+This repo is generic — anyone can use it in their own AWS account. The
+zero-knowledge path on a Mac: get them the folder, have them double-click
+**`0 - First Time Setup (run once)`** — it installs Homebrew/AWS CLI/Terraform,
+walks them through entering AWS keys, and deploys with confirmation. The
+manual path:
 
 ```bash
 git clone <this-repo> && cd <repo>
 cp terraform.tfvars.example terraform.tfvars   # set their own allowed_cidr
 terraform init && terraform apply
 ```
+
+To *operate* an existing deployment from a second computer, copy the whole
+folder (including `terraform.tfstate` and the `.pem` file) to it and run
+button `0` there — it installs tools and links up without deploying anything.
+Keep deploys (`terraform apply`, button `4`) on one "owner" machine to avoid
+state conflicts; other devices can always start/stop via the AWS Console app.
 
 State files, the `.pem` key, and `terraform.tfvars` are gitignored, so the repo
 never contains anything account-specific or secret.
