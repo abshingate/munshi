@@ -50,6 +50,12 @@ built-in version).
 
 - Keep PRs focused — one topic per PR.
 - Describe *why*, not just *what*, in the description.
+- **Record significant decisions as ADRs** in
+  [`docs/decisions/`](docs/decisions/) (copy `template.md`, number
+  sequentially, add to the index). If a reviewer could ask "why is it done
+  this way?", the answer belongs in an ADR, written *with* the change — not
+  reconstructed later. Superseding an old decision means a new ADR that marks
+  the old one superseded; never rewrite history.
 - Update `CHANGELOG.md` under an `Unreleased` heading.
 - CI must be green; a maintainer will review after that.
 

@@ -14,5 +14,6 @@
 - [ ] `terraform fmt -recursive` and `terraform validate` pass
 - [ ] Shell scripts pass `shellcheck` (or CI is green)
 - [ ] Docs updated if behavior changed (`README.md` / `USER-GUIDE.md`)
+- [ ] Significant design decision? ADR added in `docs/decisions/` with the reasoning
 - [ ] No secrets, account IDs, or personal IPs in the diff
 - [ ] Considered the non-technical end user (plain language in any user-facing text)

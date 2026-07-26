@@ -5,6 +5,12 @@ and what you must not break. Read it before making non-trivial changes.
 (Process and style live in [CONTRIBUTING.md](CONTRIBUTING.md); this is the
 technical map.)
 
+**The reasoning behind each major decision lives in
+[`docs/decisions/`](docs/decisions/) (Architecture Decision Records)** —
+context, options considered, and consequences, one file per decision. This
+file states the invariants; the ADRs explain where they came from. New
+significant decisions get a new ADR, written with the change.
+
 ## The one-paragraph version
 
 Terraform builds a stopped-by-default Windows Server 2022 EC2 instance plus its
@@ -183,7 +189,7 @@ snapshots.
 | `[0-6] - *.command` | Double-click wrappers over `scripts/` for non-technical users |
 | `USER-GUIDE.md` | End-user manual (plain language). `README.md` = deployer manual. This file = contributor manual |
 | `.github/` | CI (`ci.yml`), weekly `linkcheck.yml`, release packaging (`release.yml`), Dependabot, templates |
-| `docs/` | GitHub Pages site |
+| `docs/` | GitHub Pages site; `docs/decisions/` = ADRs (the *why* behind every major design choice) |
 | `local/` | Gitignored: downloaded VirtualHere server app |
 
 ## Invariants — do not break these
