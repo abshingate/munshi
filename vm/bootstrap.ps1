@@ -8,6 +8,13 @@ New-Item -ItemType Directory -Force -Path "C:\Installers", "C:\TallyData", "C:\H
 
 Set-TimeZone -Id "India Standard Time"
 
+# Disable the Shutdown Event Tracker: EC2 stop/start looks like an
+# "unexpected" shutdown to Windows Server, which then nags for a reason at
+# every login. Meaningless on a stop-by-design cloud VM.
+New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Reliability" -Force | Out-Null
+Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Reliability" -Name "ShutdownReasonOn" -Type DWord -Value 0
+Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Reliability" -Name "ShutdownReasonUI" -Type DWord -Value 0
+
 function New-UrlShortcut($Path, $Url) {
     "[InternetShortcut]`r`nURL=$Url" | Out-File $Path -Encoding ascii
 }
