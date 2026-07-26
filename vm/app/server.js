@@ -99,6 +99,11 @@ async function handle(req, res) {
       res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
       return res.end(html);
     }
+    if (req.method === "GET" && url.pathname === "/tailwind.css") {
+      const css = fs.readFileSync(path.join(APP_DIR, "public", "tailwind.css"));
+      res.writeHead(200, { "Content-Type": "text/css; charset=utf-8", "Cache-Control": "public, max-age=3600" });
+      return res.end(css);
+    }
 
     // First-run setup
     if (req.method === "POST" && url.pathname === "/api/setup") {
@@ -220,6 +225,12 @@ async function handle(req, res) {
     if (req.method === "POST" && url.pathname === "/api/refresh") {
       const { buildKnowledge } = require("./lib/agent");
       return json(res, 200, await buildKnowledge());
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/logout") {
+      return json(res, 200, { ok: true }, {
+        "Set-Cookie": "tally_ai_session=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0",
+      });
     }
 
     if (req.method === "POST" && url.pathname === "/api/reset") {

@@ -80,7 +80,12 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "assets" {
 }
 
 resource "aws_s3_object" "vm_files" {
-  for_each = fileset("${path.module}/vm", "**")
+  # node_modules is a local dev artifact (Tailwind build); the VM installs its
+  # own runtime deps via npm in repair.ps1 — never ship it through S3.
+  for_each = toset([
+    for f in fileset("${path.module}/vm", "**") : f
+    if !strcontains(f, "node_modules/") && !endswith(f, ".DS_Store")
+  ])
   bucket   = aws_s3_bucket.assets.id
   key      = "vm/${each.value}"
   source   = "${path.module}/vm/${each.value}"

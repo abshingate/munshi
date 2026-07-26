@@ -4,6 +4,18 @@ All notable changes to this project are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versioning: [SemVer](https://semver.org/).
 
+## [1.5.0] - 2026-07-26
+
+### Changed
+
+- **AI Accountant UI rebuilt on Tailwind CSS** (build-time compiled
+  stylesheet committed to the repo — no CDN, no runtime compiler; ADR-0013).
+  Mobile-first polish throughout: toast notifications for every operation
+  outcome, proper modals/bottom sheets replacing browser `prompt()`/`confirm()`
+  (menu, large-amount double-check, clear-conversation), loading spinners and
+  disabled states, removable photo previews, live Tally status chip, safe-area
+  handling, and a "Lock app" action (new `/api/logout`).
+
 ## [1.4.0] - 2026-07-26
 
 ### Changed

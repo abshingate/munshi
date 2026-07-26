@@ -28,3 +28,4 @@ never delete or rewrite history, add a new record).
 | [0010](0010-ai-accountant-architecture.md) | AI Accountant: Node + Anthropic SDK + Tally XML gateway, pluggable provider | accepted |
 | [0011](0011-foolproof-write-path.md) | Writes to Tally are draft → user tap → idempotent verified post | accepted |
 | [0012](0012-document-filing.md) | Bill documents on the filesystem (FY/month tree) cross-referenced in narrations | accepted |
+| [0013](0013-tailwind-build-time-css.md) | Tailwind CSS via a build-time compiled stylesheet, committed to the repo | accepted |

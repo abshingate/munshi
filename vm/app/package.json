@@ -4,7 +4,14 @@
   "private": true,
   "description": "AI accountant chat app for the Tally Cloud Workstation",
   "main": "server.js",
+  "scripts": {
+    "build:css": "tailwindcss -i tailwind.input.css -o public/tailwind.css --minify"
+  },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.110.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.0.0",
+    "tailwindcss": "^4.0.0"
   }
 }

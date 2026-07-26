@@ -176,7 +176,7 @@ if (Test-Path "$appSrc\server.js") {
 
     # Restart only when the code changed or the app isn't running, so a routine
     # repair never drops an in-flight chat.
-    $hashSrc = (Get-ChildItem "$appDst\server.js", "$appDst\package.json", "$appDst\lib\*.js", "$appDst\public\*.html" |
+    $hashSrc = (Get-ChildItem "$appDst\server.js", "$appDst\package.json", "$appDst\lib\*.js", "$appDst\public\*.html", "$appDst\public\*.css" |
         Get-FileHash -Algorithm SHA256 | ForEach-Object Hash) -join ""
     $verFile = "$appDst\data\app-version.txt"
     $prev = ""; if (Test-Path $verFile) { $prev = Get-Content $verFile -Raw }

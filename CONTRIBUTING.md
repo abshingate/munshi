@@ -46,6 +46,13 @@ If you touched `userdata.ps1`, keep the `<powershell>`/`<persist>` wrapper
 tags intact and remember it must be valid PowerShell 5.1 (Windows Server's
 built-in version).
 
+If you touched the AI Accountant UI (`vm/app/public/index.html`), rebuild the
+committed stylesheet and include it in your PR (see ADR-0013):
+
+```bash
+cd vm/app && npm install && npm run build:css
+```
+
 ## Pull requests
 
 - Keep PRs focused — one topic per PR.

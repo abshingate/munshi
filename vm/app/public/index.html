@@ -3,172 +3,175 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#18263a">
 <title>Munshi — AI Accountant</title>
+<link rel="stylesheet" href="/tailwind.css">
 <style>
-  :root { --navy:#18263a; --gold:#f0b232; --bg:#f2f4f8; --ink:#1c2733; --me:#18263a; --bot:#ffffff; }
-  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  html,body { height:100%; margin:0; }
-  body { font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif; background:var(--bg); color:var(--ink);
-         display:flex; flex-direction:column; height:100dvh; }
-  header { background:var(--navy); color:#fff; padding:calc(env(safe-area-inset-top) + 10px) 14px 10px;
-           display:flex; align-items:center; gap:10px; flex-shrink:0; }
-  header .logo { width:34px; height:34px; border-radius:50%; background:var(--gold); color:var(--navy);
-                 display:flex; align-items:center; justify-content:center; font-weight:800; font-size:17px; }
-  header .t { flex:1; min-width:0; }
-  header .t b { display:block; font-size:16px; }
-  header .t small { opacity:.75; font-size:11px; display:flex; align-items:center; gap:5px; }
-  .dot { width:8px; height:8px; border-radius:50%; background:#e05d4b; display:inline-block; }
-  .dot.on { background:#39c46d; }
-  header button { background:rgba(255,255,255,.12); color:#fff; border:0; border-radius:8px;
-                  padding:7px 10px; font-size:12px; }
-  main { flex:1; overflow-y:auto; padding:14px 12px 8px; -webkit-overflow-scrolling:touch; }
-  .msg { max-width:86%; margin:0 0 10px; padding:10px 13px; border-radius:16px; font-size:15px;
-         line-height:1.45; white-space:pre-wrap; word-wrap:break-word; }
-  .msg.me { background:var(--me); color:#fff; margin-left:auto; border-bottom-right-radius:4px; }
-  .msg.bot { background:var(--bot); border:1px solid #e2e7ee; border-bottom-left-radius:4px; }
-  .msg.bot b { color:var(--navy); }
-  .msg .att { font-size:12px; opacity:.8; font-style:italic; }
-  .step { font-size:11.5px; color:#7a8798; margin:-4px 0 10px 6px; }
-  .think { display:flex; gap:5px; padding:12px 6px; }
-  .think span { width:8px; height:8px; border-radius:50%; background:#b9c3cf; animation:blink 1.2s infinite; }
-  .think span:nth-child(2){animation-delay:.2s} .think span:nth-child(3){animation-delay:.4s}
-  @keyframes blink { 0%,80%,100%{opacity:.25} 40%{opacity:1} }
-  footer { flex-shrink:0; background:#fff; border-top:1px solid #e2e7ee;
-           padding:8px 10px calc(env(safe-area-inset-bottom) + 8px); display:flex; gap:8px; align-items:flex-end; }
-  footer .cam { width:42px; height:42px; border-radius:12px; border:1px solid #d6dde6; background:#f6f8fb;
-                font-size:20px; flex-shrink:0; }
-  footer textarea { flex:1; border:1px solid #d6dde6; border-radius:12px; padding:10px 12px; font-size:16px;
-                    font-family:inherit; resize:none; max-height:110px; outline:none; }
-  footer .send { width:42px; height:42px; border-radius:12px; border:0; background:var(--navy); color:#fff;
-                 font-size:18px; flex-shrink:0; }
-  footer .send:disabled { opacity:.4; }
-  .chips { padding:0 12px 6px; display:flex; gap:6px; flex-wrap:wrap; }
-  .chip { background:#fff; border:1px solid #d6dde6; border-radius:14px; padding:5px 10px; font-size:12px; color:#415062; }
-  /* Full-screen panels (setup / login) */
-  .panel { position:fixed; inset:0; background:var(--bg); display:flex; flex-direction:column;
-           align-items:center; justify-content:center; padding:26px; z-index:10; }
-  .panel .card { background:#fff; border:1px solid #e2e7ee; border-radius:16px; padding:24px 20px; width:100%;
-                 max-width:420px; }
-  .panel h1 { margin:0 0 6px; font-size:20px; color:var(--navy); }
-  .panel p { margin:0 0 16px; font-size:13.5px; color:#5d6b7c; line-height:1.5; }
-  .panel label { display:block; font-size:12px; font-weight:600; color:#415062; margin:12px 0 4px; }
-  .panel input { width:100%; border:1px solid #d6dde6; border-radius:10px; padding:11px 12px; font-size:16px; }
-  .panel button { width:100%; margin-top:18px; background:var(--navy); color:#fff; border:0; border-radius:10px;
-                  padding:13px; font-size:15px; font-weight:600; }
-  .panel .err { color:#c0392b; font-size:13px; margin-top:10px; min-height:16px; }
-  /* Draft entry cards */
-  .draft { background:#fffaf0; border:1.5px solid var(--gold); border-radius:14px; padding:12px 14px;
-           margin:0 0 12px; max-width:92%; font-size:14px; }
-  .draft h4 { margin:0 0 8px; font-size:13px; color:var(--navy); display:flex; gap:6px; align-items:center; }
-  .draft table { width:100%; border-collapse:collapse; font-size:13.5px; margin:4px 0 8px; }
-  .draft td { padding:3px 4px; border-bottom:1px dashed #e8dfc8; }
-  .draft td:last-child { text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; }
-  .draft .meta { font-size:12px; color:#7a6f52; margin-bottom:10px; }
-  .draft .btns { display:flex; gap:8px; }
-  .draft .btns button { flex:1; border:0; border-radius:10px; padding:11px; font-size:14px; font-weight:600; }
-  .draft .ok { background:#1b7a3d; color:#fff; }
-  .draft .no { background:#f0f0f0; color:#5d6b7c; }
-  .draft .done { font-weight:700; }
-  .draft .done.good { color:#1b7a3d; } .draft .done.bad { color:#c0392b; }
-  .preview { display:flex; gap:6px; padding:0 12px 6px; }
-  .preview img { height:52px; border-radius:8px; border:1px solid #d6dde6; }
-  .hidden { display:none !important; }
+  /* The few things Tailwind utilities don't cover cleanly */
+  @keyframes typing { 0%,80%,100%{opacity:.25;transform:translateY(0)} 40%{opacity:1;transform:translateY(-3px)} }
+  .typing-dot { animation: typing 1.2s infinite; }
+  .typing-dot:nth-child(2){ animation-delay:.2s } .typing-dot:nth-child(3){ animation-delay:.4s }
+  @keyframes toast-in { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+  .toast { animation: toast-in .18s ease-out; }
+  @keyframes sheet-in { from{transform:translateY(24px);opacity:.6} to{transform:translateY(0);opacity:1} }
+  .sheet { animation: sheet-in .18s ease-out; }
+  textarea { field-sizing: content; }
 </style>
 </head>
-<body>
+<body class="h-dvh flex flex-col bg-slate-100 text-slate-800 antialiased overscroll-none">
 
-<header>
-  <div class="logo">म</div>
-  <div class="t">
-    <b>Munshi — AI Accountant</b>
-    <small><span class="dot" id="tallyDot"></span><span id="statusText">connecting…</span></small>
+<!-- Toasts -->
+<div id="toasts" aria-live="polite" class="fixed top-3 inset-x-0 z-50 flex flex-col items-center gap-2 px-4 pointer-events-none"></div>
+
+<!-- Header -->
+<header class="shrink-0 bg-navy text-white pt-[env(safe-area-inset-top)] shadow-md z-20">
+  <div class="max-w-2xl mx-auto flex items-center gap-3 px-4 py-2.5">
+    <div class="w-9 h-9 rounded-full bg-gold text-navy font-extrabold grid place-items-center text-lg select-none">म</div>
+    <div class="flex-1 min-w-0">
+      <div class="font-semibold text-[15px] leading-tight">Munshi · AI Accountant</div>
+      <div class="flex items-center gap-1.5 text-[11px] text-white/70">
+        <span id="tallyDot" class="w-2 h-2 rounded-full bg-red-400"></span>
+        <span id="statusText" class="truncate">connecting…</span>
+      </div>
+    </div>
+    <button id="menuBtn" aria-label="Menu" class="w-9 h-9 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 transition grid place-items-center text-lg">⋯</button>
   </div>
-  <button id="menuBtn">⋯</button>
 </header>
 
-<main id="chat"></main>
-<div class="preview hidden" id="preview"></div>
-<div class="chips" id="chips">
-  <span class="chip" data-q="What did I spend this month?">Spending this month</span>
-  <span class="chip" data-q="Show me today's entries">Today's entries</span>
-  <span class="chip" data-q="What are my cash and bank balances?">Cash &amp; bank balance</span>
+<!-- Chat -->
+<main id="chatScroll" class="flex-1 overflow-y-auto">
+  <div id="chat" class="max-w-2xl mx-auto w-full px-3 py-4 flex flex-col gap-2.5"></div>
+</main>
+
+<!-- Attachment previews -->
+<div id="preview" class="hidden shrink-0 bg-white/80 backdrop-blur border-t border-slate-200">
+  <div class="max-w-2xl mx-auto flex gap-2 px-3 py-2 overflow-x-auto"></div>
 </div>
 
-<footer>
-  <button class="cam" id="camBtn" title="Attach a bill photo">📷</button>
-  <input type="file" id="fileInput" accept="image/*" capture="environment" multiple class="hidden">
-  <textarea id="input" rows="1" placeholder="Type, or send a bill photo…"></textarea>
-  <button class="send" id="sendBtn">➤</button>
+<!-- Suggestion chips (empty state only) -->
+<div id="chips" class="shrink-0">
+  <div class="max-w-2xl mx-auto flex gap-2 px-3 pb-2 overflow-x-auto">
+    <button data-q="What did I spend this month?" class="chip shrink-0 bg-white border border-slate-300 rounded-full px-3.5 py-1.5 text-xs text-slate-600 active:scale-95 transition">💸 Spending this month</button>
+    <button data-q="Show me today's entries" class="chip shrink-0 bg-white border border-slate-300 rounded-full px-3.5 py-1.5 text-xs text-slate-600 active:scale-95 transition">📒 Today's entries</button>
+    <button data-q="What are my cash and bank balances?" class="chip shrink-0 bg-white border border-slate-300 rounded-full px-3.5 py-1.5 text-xs text-slate-600 active:scale-95 transition">🏦 Cash &amp; bank balance</button>
+  </div>
+</div>
+
+<!-- Composer -->
+<footer class="shrink-0 bg-white border-t border-slate-200 pb-[env(safe-area-inset-bottom)]">
+  <div class="max-w-2xl mx-auto flex items-end gap-2 px-3 py-2.5">
+    <button id="camBtn" aria-label="Attach a bill photo" class="shrink-0 w-11 h-11 rounded-xl border border-slate-300 bg-slate-50 text-xl active:scale-95 transition grid place-items-center">📷</button>
+    <input type="file" id="fileInput" accept="image/*" capture="environment" multiple class="hidden">
+    <textarea id="input" rows="1" placeholder="Type, or send a bill photo…"
+      class="flex-1 max-h-28 resize-none rounded-xl bg-slate-100 border border-transparent px-4 py-2.5 text-base outline-none focus:border-navy/40 focus:bg-white transition"></textarea>
+    <button id="sendBtn" aria-label="Send" class="shrink-0 w-11 h-11 rounded-xl bg-navy text-white text-lg grid place-items-center active:scale-95 transition disabled:opacity-40">
+      <span id="sendIcon">➤</span>
+      <span id="sendSpin" class="hidden w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+    </button>
+  </div>
 </footer>
 
-<!-- Setup panel (first run) -->
-<div class="panel hidden" id="setupPanel">
-  <div class="card">
-    <h1>Set up your AI Accountant</h1>
-    <p>One-time setup. You need an Anthropic API key (console.anthropic.com → API keys) and a passcode you'll use to open this app.</p>
-    <label>Anthropic API key</label>
-    <input id="setupKey" placeholder="sk-ant-…" autocomplete="off">
-    <label>Choose a passcode</label>
-    <input id="setupPass" type="password" placeholder="At least 4 characters">
-    <button id="setupBtn">Start</button>
-    <div class="err" id="setupErr"></div>
+<!-- Full-screen panels -->
+<div id="setupPanel" class="hidden fixed inset-0 z-30 bg-slate-100 overflow-y-auto">
+  <div class="min-h-full grid place-items-center p-6">
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 w-full max-w-md">
+      <div class="w-12 h-12 rounded-2xl bg-navy text-gold font-extrabold grid place-items-center text-2xl mb-4">म</div>
+      <h1 class="text-xl font-bold text-navy mb-1">Set up your AI Accountant</h1>
+      <p class="text-sm text-slate-500 mb-5 leading-relaxed">One-time setup. You need an Anthropic API key (console.anthropic.com → API keys) and a passcode you'll use to open this app.</p>
+      <label class="block text-xs font-semibold text-slate-600 mb-1" for="setupKey">Anthropic API key</label>
+      <input id="setupKey" placeholder="sk-ant-…" autocomplete="off"
+        class="w-full rounded-xl border border-slate-300 px-4 py-3 text-base outline-none focus:border-navy focus:ring-2 focus:ring-navy/15 transition mb-4">
+      <label class="block text-xs font-semibold text-slate-600 mb-1" for="setupPass">Choose a passcode</label>
+      <input id="setupPass" type="password" placeholder="At least 4 characters"
+        class="w-full rounded-xl border border-slate-300 px-4 py-3 text-base outline-none focus:border-navy focus:ring-2 focus:ring-navy/15 transition">
+      <button id="setupBtn" class="btn-primary w-full mt-6 rounded-xl bg-navy text-white font-semibold py-3.5 active:scale-[.98] transition disabled:opacity-50">Start</button>
+      <p id="setupErr" class="text-sm text-red-600 mt-3 min-h-5"></p>
+    </div>
   </div>
 </div>
 
-<!-- Login panel -->
-<div class="panel hidden" id="loginPanel">
-  <div class="card">
-    <h1>Welcome back</h1>
-    <p>Enter your passcode to open your AI accountant.</p>
-    <label>Passcode</label>
-    <input id="loginPass" type="password" autocomplete="current-password">
-    <button id="loginBtn">Open</button>
-    <div class="err" id="loginErr"></div>
+<div id="loginPanel" class="hidden fixed inset-0 z-30 bg-slate-100 overflow-y-auto">
+  <div class="min-h-full grid place-items-center p-6">
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 w-full max-w-md">
+      <div class="w-12 h-12 rounded-2xl bg-navy text-gold font-extrabold grid place-items-center text-2xl mb-4">म</div>
+      <h1 class="text-xl font-bold text-navy mb-1">Welcome back</h1>
+      <p class="text-sm text-slate-500 mb-5">Enter your passcode to open your AI accountant.</p>
+      <label class="block text-xs font-semibold text-slate-600 mb-1" for="loginPass">Passcode</label>
+      <input id="loginPass" type="password" autocomplete="current-password"
+        class="w-full rounded-xl border border-slate-300 px-4 py-3 text-base outline-none focus:border-navy focus:ring-2 focus:ring-navy/15 transition">
+      <button id="loginBtn" class="btn-primary w-full mt-6 rounded-xl bg-navy text-white font-semibold py-3.5 active:scale-[.98] transition disabled:opacity-50">Open</button>
+      <p id="loginErr" class="text-sm text-red-600 mt-3 min-h-5"></p>
+    </div>
   </div>
+</div>
+
+<!-- Modal / bottom sheet host -->
+<div id="modalHost" class="hidden fixed inset-0 z-40 bg-black/40 flex items-end sm:items-center justify-center" role="dialog" aria-modal="true">
+  <div id="modalCard" class="sheet bg-white w-full sm:max-w-sm rounded-t-2xl sm:rounded-2xl p-5 pb-[max(env(safe-area-inset-bottom),1.25rem)]"></div>
 </div>
 
 <script>
 (function () {
   "use strict";
   const $ = (id) => document.getElementById(id);
-  const chat = $("chat");
+  const chat = $("chat"), scroller = $("chatScroll");
   let pendingImages = [];
 
+  const scroll = () => { scroller.scrollTop = scroller.scrollHeight; };
   function el(tag, cls, text) {
     const e = document.createElement(tag);
     if (cls) e.className = cls;
     if (text !== undefined) e.textContent = text;
     return e;
   }
+
+  // ---------- feedback: toasts ----------
+  function toast(msg, type = "info", ms = 3500) {
+    const colors = { info: "bg-slate-900/90", success: "bg-emerald-600", error: "bg-red-600" };
+    const t = el("div", `toast pointer-events-auto ${colors[type]} text-white text-sm px-4 py-2.5 rounded-xl shadow-lg max-w-sm text-center`, msg);
+    $("toasts").appendChild(t);
+    setTimeout(() => { t.style.opacity = "0"; t.style.transition = "opacity .3s"; setTimeout(() => t.remove(), 320); }, ms);
+  }
+
+  // ---------- feedback: modal / bottom sheet ----------
+  function openModal(build) {
+    const host = $("modalHost"), card = $("modalCard");
+    card.innerHTML = "";
+    host.classList.remove("hidden");
+    const close = () => host.classList.add("hidden");
+    host.onclick = (e) => { if (e.target === host) close(); };
+    build(card, close);
+  }
+
+  // ---------- messages ----------
   function addMsg(role, text, attachments) {
-    const m = el("div", "msg " + (role === "user" ? "me" : "bot"));
-    if (attachments) {
-      const a = el("div", "att", attachments === 1 ? "📎 1 photo attached" : `📎 ${attachments} photos attached`);
-      m.appendChild(a);
-    }
+    const mine = role === "user";
+    const m = el("div", mine
+      ? "self-end max-w-[85%] bg-navy text-white rounded-2xl rounded-br-md px-4 py-2.5 text-[15px] leading-relaxed whitespace-pre-wrap break-words shadow-sm"
+      : "self-start max-w-[88%] bg-white border border-slate-200 rounded-2xl rounded-bl-md px-4 py-2.5 text-[15px] leading-relaxed whitespace-pre-wrap break-words shadow-sm");
+    if (attachments) m.appendChild(el("div", "text-xs italic " + (mine ? "text-white/70" : "text-slate-400"), `📎 ${attachments} photo${attachments > 1 ? "s" : ""} attached`));
     if (text) {
-      // minimal safe formatting: **bold** and bullet lines
       const safe = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-      const html = safe.replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
       const span = el("span");
-      span.innerHTML = html;
+      span.innerHTML = safe.replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
       m.appendChild(span);
     }
-    chat.appendChild(m);
-    chat.scrollTop = chat.scrollHeight;
+    chat.appendChild(m); scroll();
     return m;
   }
-  function addStep(text) {
-    chat.appendChild(el("div", "step", text));
-    chat.scrollTop = chat.scrollHeight;
-  }
+  function addStep(text) { chat.appendChild(el("div", "self-start text-xs text-slate-400 pl-2", "· " + text)); scroll(); }
   function thinking(on) {
     let t = $("thinkRow");
     if (on && !t) {
-      t = el("div", "think"); t.id = "thinkRow";
-      t.append(el("span"), el("span"), el("span"));
-      chat.appendChild(t); chat.scrollTop = chat.scrollHeight;
+      t = el("div", "self-start bg-white border border-slate-200 rounded-2xl rounded-bl-md px-4 py-3 flex gap-1.5 shadow-sm"); t.id = "thinkRow";
+      for (let i = 0; i < 3; i++) t.appendChild(el("span", "typing-dot w-2 h-2 rounded-full bg-slate-400 inline-block"));
+      chat.appendChild(t); scroll();
     } else if (!on && t) t.remove();
+  }
+  function setBusy(b) {
+    $("sendBtn").disabled = b;
+    $("sendIcon").classList.toggle("hidden", b);
+    $("sendSpin").classList.toggle("hidden", !b);
   }
 
   async function api(path, body, method) {
@@ -187,73 +190,92 @@
     get_daybook: "Reading your entries…", propose_entry: "Preparing the entry for your approval…",
     refresh_knowledge: "Refreshing my knowledge…",
   };
+  const fmtDate = (d) => `${d.slice(6, 8)}-${d.slice(4, 6)}-${d.slice(0, 4)}`;
+  const fmtAmt = (n) => "₹" + Number(n).toLocaleString("en-IN", { maximumFractionDigits: 2 });
 
-  function fmtDate(yyyymmdd) {
-    return `${yyyymmdd.slice(6,8)}-${yyyymmdd.slice(4,6)}-${yyyymmdd.slice(0,4)}`;
-  }
-  function fmtAmt(n) { return "₹" + Number(n).toLocaleString("en-IN", { maximumFractionDigits: 2 }); }
-
+  // ---------- draft cards ----------
   function renderDraft(d) {
-    const card = el("div", "draft");
-    card.dataset.id = d.id;
-    const h = el("h4", null, `📋 Entry for your approval — ${d.voucher.voucher_type}, ${fmtDate(d.voucher.date)}`);
-    card.appendChild(h);
-    if (d.voucher.narration) card.appendChild(el("div", "meta", d.voucher.narration));
-    const t = document.createElement("table");
-    for (const e of d.voucher.entries) {
-      const tr = document.createElement("tr");
-      tr.appendChild(el("td", null, `${e.type === "debit" ? "Dr" : "Cr"}  ${e.ledger}`));
-      tr.appendChild(el("td", null, fmtAmt(e.amount)));
-      t.appendChild(tr);
-    }
-    card.appendChild(t);
-    const extras = [];
-    if ((d.newLedgers || []).length) extras.push(`will create ledger${d.newLedgers.length > 1 ? "s" : ""}: ${d.newLedgers.map((l) => `${l.name} (${l.group})`).join(", ")}`);
-    if (d.docCount) extras.push(`${d.docCount} bill photo${d.docCount > 1 ? "s" : ""} will be filed with this entry`);
-    if (extras.length) card.appendChild(el("div", "meta", "• " + extras.join("\n• ")));
+    const card = el("div", "self-start w-full max-w-[94%] bg-amber-50 border border-amber-300 rounded-2xl p-4 shadow-sm");
+    card.appendChild(el("div", "text-[13px] font-semibold text-navy mb-1",
+      `📋 Entry for your approval — ${d.voucher.voucher_type}, ${fmtDate(d.voucher.date)}`));
+    if (d.voucher.narration) card.appendChild(el("div", "text-xs text-amber-900/70 mb-2", d.voucher.narration));
 
-    const btns = el("div", "btns");
-    const ok = el("button", "ok", "✓ Confirm & record");
-    const no = el("button", "no", "Reject");
+    const rows = el("div", "divide-y divide-dashed divide-amber-200 mb-2");
+    for (const e of d.voucher.entries) {
+      const r = el("div", "flex justify-between items-baseline py-1.5 text-sm");
+      r.appendChild(el("span", "text-slate-700", `${e.type === "debit" ? "Dr" : "Cr"}  ${e.ledger}`));
+      r.appendChild(el("span", "font-semibold tabular-nums text-slate-800", fmtAmt(e.amount)));
+      rows.appendChild(r);
+    }
+    card.appendChild(rows);
+
+    const extras = [];
+    if ((d.newLedgers || []).length) extras.push(`Will create ledger${d.newLedgers.length > 1 ? "s" : ""}: ${d.newLedgers.map((l) => `${l.name} (${l.group})`).join(", ")}`);
+    if (d.docCount) extras.push(`${d.docCount} bill photo${d.docCount > 1 ? "s" : ""} will be filed with this entry`);
+    for (const x of extras) card.appendChild(el("div", "text-xs text-amber-900/70", "• " + x));
+
+    const btns = el("div", "flex gap-2 mt-3");
+    const no = el("button", "flex-1 rounded-xl bg-white border border-slate-300 text-slate-600 font-semibold py-2.5 text-sm active:scale-[.98] transition disabled:opacity-50", "Reject");
+    const ok = el("button", "flex-1 rounded-xl bg-emerald-600 text-white font-semibold py-2.5 text-sm active:scale-[.98] transition disabled:opacity-50", "✓ Confirm & record");
     btns.append(no, ok);
     card.appendChild(btns);
 
-    ok.addEventListener("click", async () => {
-      if (d.bigAmount) {
-        const typed = prompt(`This is a large entry (${fmtAmt(d.total)}). Type the amount ${d.total} to confirm:`);
-        if (typed === null) return;
-        if (Number(String(typed).replace(/[^0-9.]/g, "")) !== Number(d.total)) { alert("Amount didn't match — not recorded."); return; }
-      }
+    const doPost = async () => {
       ok.disabled = no.disabled = true; ok.textContent = "Recording…";
       try {
         const r = await api("/api/confirm", { draft_id: d.id });
         btns.remove();
-        card.appendChild(el("div", "done good",
+        card.appendChild(el("div", "mt-1 text-sm font-semibold text-emerald-700",
           r.verified ? "✅ Recorded in Tally and verified in the day book." : "✅ Recorded in Tally (verification pending — check the day book)."));
-        if (r.docPaths && r.docPaths.length) card.appendChild(el("div", "meta", "📁 Bill filed: " + r.docPaths[0]));
+        if (r.docPaths && r.docPaths.length) card.appendChild(el("div", "text-xs text-amber-900/70 mt-1", "📁 Bill filed: " + r.docPaths[0]));
+        toast("Entry recorded" + (r.verified ? " & verified ✓" : ""), "success");
       } catch (err) {
         ok.disabled = no.disabled = false; ok.textContent = "✓ Confirm & record";
-        card.appendChild(el("div", "done bad", "⚠️ " + err.message));
+        toast(err.message, "error", 5000);
       }
-      chat.scrollTop = chat.scrollHeight;
+      scroll();
+    };
+
+    ok.addEventListener("click", () => {
+      if (!d.bigAmount) return doPost();
+      openModal((cardEl, close) => {
+        cardEl.appendChild(el("h3", "text-base font-bold text-navy mb-1", "Large entry — double check"));
+        cardEl.appendChild(el("p", "text-sm text-slate-500 mb-3", `This entry totals ${fmtAmt(d.total)}. Type the amount to confirm.`));
+        const inp = document.createElement("input");
+        inp.type = "text"; inp.inputMode = "decimal"; inp.placeholder = String(d.total);
+        inp.className = "w-full rounded-xl border border-slate-300 px-4 py-3 text-base outline-none focus:border-navy focus:ring-2 focus:ring-navy/15";
+        cardEl.appendChild(inp);
+        const go = el("button", "w-full mt-4 rounded-xl bg-emerald-600 text-white font-semibold py-3 active:scale-[.98] transition", "Confirm & record");
+        cardEl.appendChild(go);
+        go.addEventListener("click", () => {
+          if (Number(String(inp.value).replace(/[^0-9.]/g, "")) === Number(d.total)) { close(); doPost(); }
+          else toast("Amount didn't match — not recorded.", "error");
+        });
+        setTimeout(() => inp.focus(), 50);
+      });
     });
     no.addEventListener("click", async () => {
       ok.disabled = no.disabled = true;
-      try { await api("/api/reject", { draft_id: d.id }); btns.remove(); card.appendChild(el("div", "done", "Rejected — nothing was recorded.")); }
-      catch (err) { ok.disabled = no.disabled = false; card.appendChild(el("div", "done bad", "⚠️ " + err.message)); }
+      try {
+        await api("/api/reject", { draft_id: d.id });
+        btns.remove();
+        card.appendChild(el("div", "mt-1 text-sm font-semibold text-slate-500", "Rejected — nothing was recorded."));
+        toast("Draft rejected", "info");
+      } catch (err) { ok.disabled = no.disabled = false; toast(err.message, "error"); }
     });
 
-    chat.appendChild(card);
-    chat.scrollTop = chat.scrollHeight;
+    chat.appendChild(card); scroll();
   }
 
+  // ---------- send ----------
   async function send() {
     const text = $("input").value.trim();
     if (!text && pendingImages.length === 0) return;
-    $("input").value = ""; autoSize();
+    $("input").value = "";
     const images = pendingImages; pendingImages = []; renderPreview();
+    $("chips").classList.add("hidden");
     addMsg("user", text, images.length || undefined);
-    $("sendBtn").disabled = true; thinking(true);
+    setBusy(true); thinking(true);
     try {
       const data = await api("/api/chat", { text, images });
       thinking(false);
@@ -262,31 +284,36 @@
       for (const d of data.drafts || []) renderDraft(d);
     } catch (err) {
       thinking(false);
+      toast(err.message, "error", 5000);
       addMsg("assistant", "⚠️ " + err.message);
     } finally {
-      $("sendBtn").disabled = false;
+      setBusy(false);
       refreshStatus();
     }
   }
 
+  // ---------- attachments ----------
   function renderPreview() {
-    const p = $("preview");
-    p.innerHTML = "";
-    if (pendingImages.length === 0) { p.classList.add("hidden"); return; }
-    p.classList.remove("hidden");
-    for (const img of pendingImages) {
-      const i = document.createElement("img");
-      i.src = `data:${img.media_type};base64,${img.data}`;
-      p.appendChild(i);
-    }
+    const wrap = $("preview"), inner = wrap.firstElementChild;
+    inner.innerHTML = "";
+    wrap.classList.toggle("hidden", pendingImages.length === 0);
+    pendingImages.forEach((img, i) => {
+      const holder = el("div", "relative shrink-0");
+      const im = document.createElement("img");
+      im.src = `data:${img.media_type};base64,${img.data}`;
+      im.className = "h-14 rounded-lg border border-slate-300";
+      const x = el("button", "absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-slate-800 text-white text-[10px] grid place-items-center", "✕");
+      x.setAttribute("aria-label", "Remove photo");
+      x.addEventListener("click", () => { pendingImages.splice(i, 1); renderPreview(); });
+      holder.append(im, x);
+      inner.appendChild(holder);
+    });
   }
-
   function fileToImage(file) {
     return new Promise((resolve, reject) => {
       const img = new Image();
       const url = URL.createObjectURL(file);
       img.onload = () => {
-        // Downscale to max 1600px long edge to keep uploads fast
         const scale = Math.min(1, 1600 / Math.max(img.width, img.height));
         const canvas = document.createElement("canvas");
         canvas.width = Math.round(img.width * scale);
@@ -301,42 +328,32 @@
     });
   }
 
-  function autoSize() {
-    const t = $("input");
-    t.style.height = "auto";
-    t.style.height = Math.min(t.scrollHeight, 110) + "px";
-  }
-
+  // ---------- status / panels ----------
   async function refreshStatus() {
     try {
       const s = await api("/api/status");
-      if (!s.configured) { show("setup"); return; }
-      if (!s.authed) { show("login"); return; }
+      if (!s.configured) return show("setup");
+      if (!s.authed) return show("login");
       show("chat");
-      $("tallyDot").className = "dot" + (s.tallyOnline ? " on" : "");
-      $("statusText").textContent = s.tallyOnline
-        ? `Tally connected · ${s.model}`
-        : "Tally offline — open Tally on the computer";
+      $("tallyDot").className = "w-2 h-2 rounded-full " + (s.tallyOnline ? "bg-emerald-400" : "bg-amber-400 animate-pulse");
+      $("statusText").textContent = s.tallyOnline ? `Tally connected · ${s.model}` : "Tally offline — open Tally on the computer";
     } catch {
+      $("tallyDot").className = "w-2 h-2 rounded-full bg-red-400 animate-pulse";
       $("statusText").textContent = "server unreachable";
     }
   }
-
   function show(which) {
     $("setupPanel").classList.toggle("hidden", which !== "setup");
     $("loginPanel").classList.toggle("hidden", which !== "login");
-    if (which === "chat" && !chat.dataset.loaded) {
-      chat.dataset.loaded = "1";
-      loadHistory();
-    }
+    if (which === "chat" && !chat.dataset.loaded) { chat.dataset.loaded = "1"; loadHistory(); }
   }
-
   async function loadHistory() {
     try {
       const h = await api("/api/history");
       if (h.messages.length === 0) {
-        addMsg("assistant", "Namaste! 🙏 I'm Munshi, your AI accountant.\n\nSend me a photo of a bill, or just tell me things like:\n• \"Paid ₹5,000 shop rent in cash yesterday\"\n• \"How much did we sell this month?\"\n\nI'll propose the entry, and only after you say yes will I record it in Tally.");
+        addMsg("assistant", "Namaste! 🙏 I'm Munshi, your AI accountant.\n\nSend me a photo of a bill, or just tell me things like:\n• \"Paid ₹5,000 shop rent in cash yesterday\"\n• \"How much did we sell this month?\"\n\nI'll show you the entry as a card — nothing is recorded until you tap Confirm.");
       } else {
+        $("chips").classList.add("hidden");
         for (const m of h.messages) addMsg(m.role, m.text, m.images || undefined);
       }
       const p = await api("/api/drafts");
@@ -344,44 +361,67 @@
     } catch {}
   }
 
-  // --- events ---
+  // ---------- menu ----------
+  function openMenu() {
+    openModal((card, close) => {
+      card.appendChild(el("h3", "text-base font-bold text-navy mb-3", "Menu"));
+      const mk = (label, sub, fn, danger) => {
+        const b = el("button", `w-full text-left rounded-xl px-4 py-3 mb-2 border ${danger ? "border-red-200 bg-red-50" : "border-slate-200 bg-slate-50"} active:scale-[.99] transition`);
+        b.appendChild(el("div", `text-sm font-semibold ${danger ? "text-red-700" : "text-slate-800"}`, label));
+        b.appendChild(el("div", "text-xs text-slate-500", sub));
+        b.addEventListener("click", async () => { close(); await fn(); });
+        card.appendChild(b);
+      };
+      mk("🔄 Refresh knowledge", "Re-read companies & ledgers from Tally", async () => {
+        try { await api("/api/refresh", {}); toast("Knowledge refreshed from Tally", "success"); refreshStatus(); }
+        catch (err) { toast(err.message, "error"); }
+      });
+      mk("🔒 Lock app", "Ask for the passcode again on this device", async () => {
+        try { await api("/api/logout", {}); location.reload(); } catch (err) { toast(err.message, "error"); }
+      });
+      mk("🗑️ Clear conversation", "Start fresh — recorded entries stay in Tally", async () => {
+        openModal((c2, close2) => {
+          c2.appendChild(el("h3", "text-base font-bold text-navy mb-1", "Clear the whole conversation?"));
+          c2.appendChild(el("p", "text-sm text-slate-500 mb-4", "Entries already recorded in Tally are not affected."));
+          const yes = el("button", "w-full rounded-xl bg-red-600 text-white font-semibold py-3 mb-2 active:scale-[.98] transition", "Yes, clear it");
+          const noB = el("button", "w-full rounded-xl bg-slate-100 text-slate-600 font-semibold py-3 active:scale-[.98] transition", "Cancel");
+          yes.addEventListener("click", async () => { try { await api("/api/reset", {}); location.reload(); } catch (err) { toast(err.message, "error"); close2(); } });
+          noB.addEventListener("click", close2);
+          c2.append(yes, noB);
+        });
+      }, true);
+    });
+  }
+
+  // ---------- events ----------
   $("sendBtn").addEventListener("click", send);
-  $("input").addEventListener("input", autoSize);
   $("input").addEventListener("keydown", (e) => {
     if (e.key === "Enter" && !e.shiftKey && window.innerWidth > 700) { e.preventDefault(); send(); }
   });
   $("camBtn").addEventListener("click", () => $("fileInput").click());
   $("fileInput").addEventListener("change", async (e) => {
     for (const f of e.target.files) {
-      try { pendingImages.push(await fileToImage(f)); } catch {}
+      try { pendingImages.push(await fileToImage(f)); } catch { toast("Couldn't read that photo", "error"); }
     }
     e.target.value = "";
     renderPreview();
+    if (pendingImages.length) toast(`${pendingImages.length} photo${pendingImages.length > 1 ? "s" : ""} ready — add a note or just send`, "info");
   });
-  $("chips").addEventListener("click", (e) => {
-    const q = e.target.dataset && e.target.dataset.q;
-    if (q) { $("input").value = q; send(); }
-  });
-  $("menuBtn").addEventListener("click", async () => {
-    const choice = prompt("Type: refresh (re-read Tally), reset (clear chat)");
-    if (choice === "refresh") { await api("/api/refresh", {}); addStep("Knowledge refreshed from Tally"); refreshStatus(); }
-    if (choice === "reset" && confirm("Clear the whole conversation?")) { await api("/api/reset", {}); location.reload(); }
-  });
-  $("setupBtn").addEventListener("click", async () => {
-    try {
-      $("setupErr").textContent = "";
-      await api("/api/setup", { apiKey: $("setupKey").value.trim(), passcode: $("setupPass").value });
-      location.reload();
-    } catch (err) { $("setupErr").textContent = err.message; }
-  });
-  $("loginBtn").addEventListener("click", async () => {
-    try {
-      $("loginErr").textContent = "";
-      await api("/api/login", { passcode: $("loginPass").value });
-      location.reload();
-    } catch (err) { $("loginErr").textContent = err.message; }
-  });
+  document.querySelectorAll(".chip").forEach((c) => c.addEventListener("click", () => { $("input").value = c.dataset.q; send(); }));
+  $("menuBtn").addEventListener("click", openMenu);
+
+  const bindPanelBtn = (btnId, run, errId) => {
+    const b = $(btnId);
+    b.addEventListener("click", async () => {
+      $(errId).textContent = ""; b.disabled = true;
+      try { await run(); location.reload(); }
+      catch (err) { $(errId).textContent = err.message; b.disabled = false; }
+    });
+  };
+  bindPanelBtn("setupBtn", () => api("/api/setup", { apiKey: $("setupKey").value.trim(), passcode: $("setupPass").value }), "setupErr");
+  bindPanelBtn("loginBtn", () => api("/api/login", { passcode: $("loginPass").value }), "loginErr");
   $("loginPass").addEventListener("keydown", (e) => { if (e.key === "Enter") $("loginBtn").click(); });
+  $("setupPass").addEventListener("keydown", (e) => { if (e.key === "Enter") $("setupBtn").click(); });
 
   refreshStatus();
   setInterval(refreshStatus, 60000);
