@@ -33,9 +33,16 @@ and all data persists forever and is snapshotted daily.
 
 ## Prerequisites
 
-- An AWS account and the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) configured (`aws configure`)
-- [Terraform](https://developer.hashicorp.com/terraform/install) ≥ 1.5
+- An AWS account (see below if you've never had one)
 - A TallyPrime license (Silver single-user is enough; activated once, on the machine)
+- On a Mac, button `0` installs the tooling ([AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html), [Terraform](https://developer.hashicorp.com/terraform/install) ≥ 1.5) automatically; install them yourself on other platforms
+
+**Never had an AWS account?** This is the one genuinely manual part (Amazon
+requires it): sign up at [aws.amazon.com](https://aws.amazon.com) with an
+email, a credit/debit card, and phone OTP verification (~10 minutes). Then
+create the access keys button `0` will ask for: AWS Console → IAM → Users →
+Create user → attach `AdministratorAccess` → Security credentials → Create
+access key. Everything after that is automated.
 
 ## Deploy (one time)
 

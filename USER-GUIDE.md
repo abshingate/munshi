@@ -109,6 +109,16 @@ to finish, then try Step 1 again.
 
 ## Common questions
 
+**What if I press a button twice, or the wrong one?**
+Nothing bad happens — ever. All buttons are safe to repeat:
+- *Turn ON* when it's already on: it just shows you the address again.
+- *Turn OFF* when it's already off: nothing happens.
+- *First Time Setup* again: it checks everything, says "already done", and
+  stops. It will never create a second cloud computer or bill you twice.
+- *Check* and *Get Password*: only look, never change anything.
+- *Fix Connection*: just re-saves your current address; running it twice is
+  the same as once.
+
 **I forgot to turn it off — will I get a huge bill?**
 No. It turns itself off after ~1 hour of inactivity and emails you. There is
 also a monthly budget alarm: if spending ever heads past about Rs. 2,000, you

@@ -61,6 +61,21 @@ if terraform state list 2>/dev/null | grep -q aws_instance.this; then
   exit 0
 fi
 
+# Folder has no state — but does the AWS account already have the workstation?
+# (Happens when someone starts from a fresh copy instead of copying the
+# original folder. Deploying again would fail half-way on name collisions.)
+EXISTING=$(aws ec2 describe-instances --region ap-south-1 \
+  --filters "Name=tag:Name,Values=tally-workstation" "Name=instance-state-name,Values=pending,running,stopping,stopped" \
+  --query 'Reservations[0].Instances[0].InstanceId' --output text 2>/dev/null)
+if [[ -n "$EXISTING" && "$EXISTING" != "None" ]]; then
+  echo ""
+  echo "STOP: this AWS account ALREADY has the cloud computer ($EXISTING)."
+  echo "Do not create a second one. To control the existing one from this Mac,"
+  echo "copy the ORIGINAL folder from the computer that created it (it contains"
+  echo "a 'terraform.tfstate' file and a '.pem' file — those are the link to it)."
+  exit 1
+fi
+
 step "No cloud computer exists yet for this folder"
 echo "    Creating it costs roughly Rs. 900-1,000 per month with light use."
 read -r -p "    Create it now? (y/n): " GO
