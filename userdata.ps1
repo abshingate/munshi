@@ -47,8 +47,10 @@ try {
 
 # --- TallyPrime installer (no silent mode exists; auto-launched at first login)
 $tallyExe = "C:\Installers\TallyPrimeSetup.exe"
-foreach ($u in @("https://tallysolutions.com/download/setup.exe",
-                 "https://tallysolutions.com/downloads/setup.exe")) {
+# Primary URL is Tally's own mirror (found via their download page's JS);
+# adjust the release segment (Rel7.1) when Tally ships a newer version.
+foreach ($u in @("https://tallymirror.tallysolutions.com/download_centre/Rel7.1/TP/Full/setup.exe",
+                 "https://tallymirror.tallysolutions.com/download_centre/Rel6.2/TP/Full/setup.exe")) {
     try {
         Invoke-WebRequest -Uri $u -OutFile $tallyExe -UseBasicParsing
         if ((Get-Item $tallyExe).Length -gt 10MB) { break }

@@ -101,7 +101,12 @@ else
         *)     echo "$line" ;;
       esac
     done
-    [[ "$ST" == "Failed" ]] && ISSUES=$((ISSUES+1))
+    REMOTE_FAILS=$(echo "$OUT" | grep -c '^FAIL')
+    if [[ "$REMOTE_FAILS" -gt 0 ]]; then
+      ISSUES=$((ISSUES + REMOTE_FAILS))
+    elif [[ "$ST" == "Failed" ]]; then
+      ISSUES=$((ISSUES + 1))
+    fi
   fi
 fi
 
