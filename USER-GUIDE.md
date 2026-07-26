@@ -211,6 +211,15 @@ No. It turns itself off after ~1 hour of inactivity and emails you. There is
 also a monthly budget alarm: if spending ever heads past about Rs. 2,000, you
 get a warning email long before it becomes a problem.
 
+**Where do I see all my filed bills?**
+In the AI accountant app, tap the **📁 button** at the top — a file browser
+opens with all your filed bills (organized by year and month) and the Drive
+inbox. Tap a file to view it, tap ⬇️ to download. There's a search box too —
+type anything you remember ("rent july", a party name, an amount) and it
+finds the bill. You can also just ask Munshi in chat: "find the July rent
+bill". Nothing can be changed or deleted from this browser — it's view-only
+by design.
+
 **How do I get files onto / off the cloud computer?**
 Google Drive sync is built in. One time only: double-click **"Set up Google
 Drive"** on the cloud computer's desktop and sign in to your Google account

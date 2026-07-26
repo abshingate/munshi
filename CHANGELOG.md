@@ -4,6 +4,20 @@ All notable changes to this project are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versioning: [SemVer](https://semver.org/).
 
+## [1.8.0] - 2026-07-26
+
+### Added
+
+- **Read-only document browser** in the AI Accountant app (📁 button):
+  browse Filed documents and the Drive inbox like a file explorer —
+  breadcrumbs, view in browser, download — with no modification endpoints
+  by construction.
+- **Document search**: a local metadata index (no external search service)
+  records voucher type, amount, ledgers, narration, date, and entry code at
+  filing time (older files backfilled from the filename convention); the
+  browser gets a live search box, and Munshi gets a `search_documents` tool
+  ("find the July rent bill").
+
 ## [1.7.0] - 2026-07-26
 
 ### Added

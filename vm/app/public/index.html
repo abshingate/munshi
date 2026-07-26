@@ -34,6 +34,7 @@
         <span id="statusText" class="truncate">connecting…</span>
       </div>
     </div>
+    <button id="docsBtn" aria-label="Documents" class="w-9 h-9 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 transition grid place-items-center text-lg">📁</button>
     <button id="menuBtn" aria-label="Menu" class="w-9 h-9 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 transition grid place-items-center text-lg">⋯</button>
   </div>
 </header>
@@ -102,6 +103,30 @@
       <button id="loginBtn" class="btn-primary w-full mt-6 rounded-xl bg-navy text-white font-semibold py-3.5 active:scale-[.98] transition disabled:opacity-50">Open</button>
       <p id="loginErr" class="text-sm text-red-600 mt-3 min-h-5"></p>
     </div>
+  </div>
+</div>
+
+<!-- Documents browser (read-only) -->
+<div id="docsPanel" class="hidden fixed inset-0 z-30 bg-slate-100 flex flex-col">
+  <div class="shrink-0 bg-navy text-white pt-[env(safe-area-inset-top)]">
+    <div class="max-w-2xl mx-auto flex items-center gap-3 px-4 py-2.5">
+      <button id="docsClose" aria-label="Close" class="w-9 h-9 rounded-lg bg-white/10 active:scale-95 transition grid place-items-center text-lg">←</button>
+      <div class="flex-1">
+        <div class="font-semibold text-[15px]">Documents</div>
+        <div class="text-[11px] text-white/70">View & download only — nothing can be changed here</div>
+      </div>
+    </div>
+    <div class="max-w-2xl mx-auto flex gap-2 px-4 pb-2.5" id="docsRoots"></div>
+    <div class="max-w-2xl mx-auto px-4 pb-3">
+      <input id="docsSearch" type="search" placeholder="🔍 Search: party, amount, month, ledger…"
+        class="w-full rounded-xl bg-white/10 placeholder-white/50 text-white px-4 py-2.5 text-sm outline-none focus:bg-white focus:text-slate-800 transition">
+    </div>
+  </div>
+  <div class="shrink-0 bg-white border-b border-slate-200">
+    <div id="docsCrumbs" class="max-w-2xl mx-auto flex items-center gap-1 px-4 py-2 text-xs text-slate-500 overflow-x-auto whitespace-nowrap"></div>
+  </div>
+  <div class="flex-1 overflow-y-auto">
+    <div id="docsList" class="max-w-2xl mx-auto px-3 py-3 flex flex-col gap-1.5 pb-[env(safe-area-inset-bottom)]"></div>
   </div>
 </div>
 
@@ -360,6 +385,133 @@
       for (const d of p.drafts || []) renderDraft(d);
     } catch {}
   }
+
+  // ---------- documents browser (read-only) ----------
+  const docs = { root: "documents", path: "" };
+  function fmtSize(b) {
+    if (b < 1024) return b + " B";
+    if (b < 1048576) return (b / 1024).toFixed(0) + " KB";
+    return (b / 1048576).toFixed(1) + " MB";
+  }
+  function fileEmoji(name) {
+    const n = name.toLowerCase();
+    if (/\.(jpg|jpeg|png|gif|webp)$/.test(n)) return "🖼️";
+    if (n.endsWith(".pdf")) return "📕";
+    if (/\.(zip|7z|rar)$/.test(n)) return "🗜️";
+    if (/\.(xls|xlsx|csv)$/.test(n)) return "📊";
+    return "📄";
+  }
+  async function loadDocs() {
+    const data = await api(`/api/docs?root=${docs.root}&path=${encodeURIComponent(docs.path)}`);
+    // Root tabs
+    const tabs = $("docsRoots");
+    tabs.innerHTML = "";
+    for (const r of data.roots) {
+      const b = el("button", `rounded-full px-3.5 py-1 text-xs font-semibold transition ${r.key === docs.root ? "bg-gold text-navy" : "bg-white/10 text-white/80"}`, r.label);
+      b.addEventListener("click", () => { docs.root = r.key; docs.path = ""; loadDocs(); });
+      tabs.appendChild(b);
+    }
+    // Breadcrumbs
+    const crumbs = $("docsCrumbs");
+    crumbs.innerHTML = "";
+    const parts = docs.path ? docs.path.split("/") : [];
+    const mk = (label, target) => {
+      const b = el("button", "text-navy font-semibold shrink-0", label);
+      b.addEventListener("click", () => { docs.path = target; loadDocs(); });
+      crumbs.appendChild(b);
+    };
+    mk("🏠 Home", "");
+    parts.forEach((p, i) => {
+      crumbs.appendChild(el("span", "text-slate-300 shrink-0", "›"));
+      mk(p, parts.slice(0, i + 1).join("/"));
+    });
+    // Entries
+    const list = $("docsList");
+    list.innerHTML = "";
+    if (data.entries.length === 0) {
+      list.appendChild(el("div", "text-center text-sm text-slate-400 py-10", "Nothing here yet"));
+    }
+    for (const e of data.entries) {
+      const row = el("div", "bg-white border border-slate-200 rounded-xl px-3.5 py-3 flex items-center gap-3 active:bg-slate-50 transition");
+      const rel = docs.path ? `${docs.path}/${e.name}` : e.name;
+      row.appendChild(el("span", "text-xl shrink-0", e.dir ? "📁" : fileEmoji(e.name)));
+      const mid = el("div", "flex-1 min-w-0");
+      mid.appendChild(el("div", "text-sm font-medium text-slate-800 truncate", e.name));
+      mid.appendChild(el("div", "text-[11px] text-slate-400",
+        e.dir ? "Folder" : `${fmtSize(e.size)} · ${new Date(e.mtime).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}`));
+      row.appendChild(mid);
+      if (e.dir) {
+        row.appendChild(el("span", "text-slate-300", "›"));
+        row.addEventListener("click", () => { docs.path = rel; loadDocs(); });
+      } else {
+        const fileUrl = `/api/docs/file?root=${docs.root}&path=${encodeURIComponent(rel)}`;
+        const dl = el("button", "w-9 h-9 rounded-lg bg-slate-100 grid place-items-center text-base active:scale-95 transition shrink-0", "⬇️");
+        dl.setAttribute("aria-label", "Download " + e.name);
+        dl.addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          const a = document.createElement("a");
+          a.href = fileUrl + "&download=1";
+          a.download = e.name;
+          a.click();
+        });
+        row.appendChild(dl);
+        row.addEventListener("click", () => window.open(fileUrl, "_blank"));
+      }
+      list.appendChild(row);
+    }
+  }
+  function docRow(e, rel, root) {
+    const row = el("div", "bg-white border border-slate-200 rounded-xl px-3.5 py-3 flex items-center gap-3 active:bg-slate-50 transition");
+    row.appendChild(el("span", "text-xl shrink-0", fileEmoji(e.name)));
+    const mid = el("div", "flex-1 min-w-0");
+    mid.appendChild(el("div", "text-sm font-medium text-slate-800 truncate", e.name));
+    const metaBits = [];
+    if (e.meta && e.meta.total) metaBits.push(fmtAmt(e.meta.total));
+    if (e.meta && e.meta.voucher_type) metaBits.push(e.meta.voucher_type);
+    if (e.meta && e.meta.date) metaBits.push(fmtDate(e.meta.date));
+    if (metaBits.length === 0) metaBits.push(fmtSize(e.size), root === "drive" ? "Drive inbox" : "Filed");
+    mid.appendChild(el("div", "text-[11px] text-slate-400 truncate", metaBits.join(" · ")));
+    row.appendChild(mid);
+    const fileUrl = `/api/docs/file?root=${root}&path=${encodeURIComponent(rel)}`;
+    const dl = el("button", "w-9 h-9 rounded-lg bg-slate-100 grid place-items-center text-base active:scale-95 transition shrink-0", "⬇️");
+    dl.setAttribute("aria-label", "Download " + e.name);
+    dl.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      const a = document.createElement("a");
+      a.href = fileUrl + "&download=1";
+      a.download = e.name;
+      a.click();
+    });
+    row.appendChild(dl);
+    row.addEventListener("click", () => window.open(fileUrl, "_blank"));
+    return row;
+  }
+
+  let docsSearchTimer;
+  async function runDocsSearch(q) {
+    const list = $("docsList"), crumbs = $("docsCrumbs");
+    const data = await api(`/api/docs/search?q=${encodeURIComponent(q)}`);
+    crumbs.innerHTML = "";
+    crumbs.appendChild(el("span", "text-navy font-semibold", `Search results (${data.results.length})`));
+    list.innerHTML = "";
+    if (data.results.length === 0) list.appendChild(el("div", "text-center text-sm text-slate-400 py-10", "No documents match"));
+    for (const r of data.results) list.appendChild(docRow(r, r.path, r.root));
+  }
+  $("docsSearch").addEventListener("input", () => {
+    clearTimeout(docsSearchTimer);
+    const q = $("docsSearch").value.trim();
+    docsSearchTimer = setTimeout(() => {
+      if (q.length >= 2) runDocsSearch(q).catch((err) => toast(err.message, "error"));
+      else loadDocs().catch(() => {});
+    }, 300);
+  });
+
+  $("docsBtn").addEventListener("click", async () => {
+    $("docsPanel").classList.remove("hidden");
+    $("docsSearch").value = "";
+    try { await loadDocs(); } catch (err) { toast(err.message, "error"); }
+  });
+  $("docsClose").addEventListener("click", () => $("docsPanel").classList.add("hidden"));
 
   // ---------- menu ----------
   function openMenu() {

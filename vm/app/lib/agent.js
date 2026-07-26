@@ -91,6 +91,16 @@ const TOOLS = [
     },
   },
   {
+    name: "search_documents",
+    description: "Search the filed bill documents and the Drive inbox by any words: party name, ledger, amount, month, narration, entry code. Returns matching files with their voucher metadata. Use when the user asks to find a bill/invoice/document.",
+    input_schema: {
+      type: "object",
+      properties: { query: { type: "string", description: "Search words, e.g. 'rent july' or '5000 cash'" } },
+      required: ["query"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "refresh_knowledge",
     description: "Re-read the company and ledger list from Tally into your working knowledge. Use after creating ledgers or if your ledger knowledge seems stale.",
     input_schema: { type: "object", properties: {}, additionalProperties: false },
@@ -140,6 +150,13 @@ async function executeTool(name, input, config, context) {
         draft_id: draft.id,
         status: "awaiting_user_confirmation",
         note: "The draft card is now visible to the user. Posting happens only when they tap Confirm — do not claim the entry is recorded.",
+      };
+    }
+    case "search_documents": {
+      const results = require("./docindex").search(input.query, 10);
+      return {
+        results: results.map((r) => ({ name: r.name, location: r.root, folder: path.dirname(r.path), ...r.meta })),
+        note: "Tell the user they can view/download these via the 📁 Documents button in the app.",
       };
     }
     case "refresh_knowledge":

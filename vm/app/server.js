@@ -80,6 +80,26 @@ function trimHistory(messages) {
   return messages;
 }
 
+// --- Read-only document browser roots (no write endpoints exist, by design)
+const DOC_ROOTS = {
+  documents: { label: "Filed documents", root: process.env.TALLY_DOCS || "C:\\TallyData\\Documents" },
+  drive: { label: "Drive inbox", root: "C:\\TallyData\\Drive" },
+};
+const DOC_TYPES = {
+  ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".gif": "image/gif",
+  ".webp": "image/webp", ".pdf": "application/pdf", ".txt": "text/plain; charset=utf-8",
+  ".csv": "text/csv", ".xml": "text/xml",
+};
+// Resolve a user-supplied relative path strictly inside the chosen root
+function docResolve(rootKey, rel) {
+  const r = DOC_ROOTS[rootKey];
+  if (!r) return null;
+  const rootAbs = path.resolve(r.root);
+  const p = path.resolve(rootAbs, rel || ".");
+  if (p !== rootAbs && !p.startsWith(rootAbs + path.sep)) return null;
+  return p;
+}
+
 // Shape sent to the UI for a draft card (no image data, no internals)
 function draftView(d) {
   return {
@@ -237,6 +257,43 @@ async function handle(req, res) {
       chats = { messages: [] };
       saveChats(chats);
       return json(res, 200, { ok: true });
+    }
+
+    if (req.method === "GET" && url.pathname === "/api/docs") {
+      const rootKey = url.searchParams.get("root") || "documents";
+      const rel = url.searchParams.get("path") || "";
+      const dir = docResolve(rootKey, rel);
+      if (!dir) return json(res, 400, { error: "invalid path" });
+      if (!fs.existsSync(dir)) return json(res, 200, { entries: [], roots: Object.entries(DOC_ROOTS).map(([k, v]) => ({ key: k, label: v.label })) });
+      const entries = fs.readdirSync(dir, { withFileTypes: true })
+        .filter((e) => !e.name.startsWith("."))
+        .map((e) => {
+          const st = fs.statSync(path.join(dir, e.name));
+          return { name: e.name, dir: e.isDirectory(), size: st.size, mtime: st.mtimeMs };
+        })
+        .sort((a, b) => (a.dir !== b.dir ? (a.dir ? -1 : 1) : b.mtime - a.mtime));
+      return json(res, 200, { entries, roots: Object.entries(DOC_ROOTS).map(([k, v]) => ({ key: k, label: v.label })) });
+    }
+
+    if (req.method === "GET" && url.pathname === "/api/docs/search") {
+      const q = url.searchParams.get("q") || "";
+      return json(res, 200, { results: require("./lib/docindex").search(q) });
+    }
+
+    if (req.method === "GET" && url.pathname === "/api/docs/file") {
+      const file = docResolve(url.searchParams.get("root") || "documents", url.searchParams.get("path") || "");
+      if (!file || !fs.existsSync(file) || !fs.statSync(file).isFile()) return json(res, 404, { error: "not found" });
+      const ext = path.extname(file).toLowerCase();
+      const type = DOC_TYPES[ext] || "application/octet-stream";
+      const forceDownload = url.searchParams.get("download") === "1" || !DOC_TYPES[ext];
+      const name = path.basename(file).replace(/[^\x20-\x7E]/g, "_").replace(/"/g, "");
+      res.writeHead(200, {
+        "Content-Type": type,
+        "Content-Length": fs.statSync(file).size,
+        "Content-Disposition": `${forceDownload ? "attachment" : "inline"}; filename="${name}"`,
+        "X-Content-Type-Options": "nosniff",
+      });
+      return fs.createReadStream(file).pipe(res);
     }
 
     if (req.method === "GET" && url.pathname === "/api/history") {

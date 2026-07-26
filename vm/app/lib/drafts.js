@@ -147,6 +147,21 @@ async function confirm(id, config) {
       if (!verified) await new Promise((r) => setTimeout(r, 1500));
     }
 
+    // Rich metadata into the document index — this is what makes filed
+    // documents searchable by amount, ledger, narration, party, etc.
+    const docindex = require("./docindex");
+    for (const p of docPaths) {
+      docindex.addEntry(path.relative(DOCS_ROOT, p).split(path.sep).join("/"), {
+        date: d.voucher.date,
+        label: d.voucher.narration || d.voucher.entries[0].ledger,
+        narration: d.voucher.narration,
+        voucher_type: d.voucher.voucher_type,
+        ledgers: d.voucher.entries.map((e) => e.ledger),
+        total: d.total,
+        marker,
+      });
+    }
+
     for (const f of d.pendingDocs || []) { try { fs.unlinkSync(f); } catch {} }
     d.pendingDocs = [];
     d.status = "posted";
