@@ -33,23 +33,46 @@ whether a sync is running right now and when the last one finished.
 "@ | Out-File $readme -Encoding ascii
 }
 
+# Janitor: a .partial not touched for an hour is an orphan from an
+# interrupted transfer (live transfers are being written continuously) —
+# delete it; the next sync re-transfers the file cleanly from source.
+$cutoff = (Get-Date).AddHours(-1)
+$orphans = @(Get-ChildItem $local -Recurse -Filter "*.partial" -ErrorAction SilentlyContinue |
+    Where-Object { $_.LastWriteTime -lt $cutoff })
+foreach ($o in $orphans) { Remove-Item $o.FullName -Force -ErrorAction SilentlyContinue }
+
 "SYNCING NOW (started $(Get-Date -Format 'dd-MMM-yyyy HH:mm:ss')).
 Files still arriving end in .partial - a file with its normal name is complete." | Out-File $status -Encoding ascii
 
-cmd /c "`"$rclone`" --config `"$conf`" bisync `"$remote`" `"$local`" --create-empty-src-dirs 2>nul" | Out-Null
+# --recover / --max-lock let bisync survive interruptions and stale locks
+$flags = "--create-empty-src-dirs --recover --max-lock 15m --conflict-resolve newer"
+cmd /c "`"$rclone`" --config `"$conf`" bisync `"$remote`" `"$local`" $flags 2>nul" | Out-Null
 $code = $LASTEXITCODE
+$recovered = $false
+if ($code -ne 0) {
+    # Self-recovery: a critically interrupted bisync refuses to run again
+    # until re-baselined; do that automatically rather than staying stuck.
+    cmd /c "`"$rclone`" --config `"$conf`" bisync `"$remote`" `"$local`" $flags --resync 2>nul" | Out-Null
+    $code = $LASTEXITCODE
+    if ($code -eq 0) { $recovered = $true }
+}
 
 $partials = @(Get-ChildItem $local -Recurse -Filter "*.partial" -ErrorAction SilentlyContinue)
 $now = Get-Date -Format "dd-MMM-yyyy HH:mm:ss"
+$notes = @()
+if ($recovered) { $notes += "(sync self-recovered from an earlier interruption)" }
+if ($orphans.Count -gt 0) { $notes += "(cleaned $($orphans.Count) leftover incomplete file(s) from an interrupted transfer)" }
+$noteText = ""
+if ($notes.Count -gt 0) { $noteText = "`r`n" + ($notes -join "`r`n") }
 if ($code -eq 0 -and $partials.Count -eq 0) {
     "OK - last sync finished $now.
 Every file currently in the Drive folder is COMPLETE.
-Next sync within 5 minutes." | Out-File $status -Encoding ascii
+Next sync within 5 minutes.$noteText" | Out-File $status -Encoding ascii
 } elseif ($code -eq 0) {
     "OK - last sync finished $now, BUT these files are still incomplete:
 $($partials.Name -join "`r`n")
-They will finish in a following sync - do not use them yet." | Out-File $status -Encoding ascii
+They will finish in a following sync - do not use them yet.$noteText" | Out-File $status -Encoding ascii
 } else {
     "SYNC PROBLEM (rclone exit $code) at $now - will retry in 5 minutes.
-If this persists, run 'Set up Google Drive' on the desktop again." | Out-File $status -Encoding ascii
+If this persists, run 'Set up Google Drive' on the desktop again.$noteText" | Out-File $status -Encoding ascii
 }
