@@ -28,8 +28,14 @@ $choco = "C:\ProgramData\chocolatey\bin\choco.exe"
 # --- Claude Code (plus its prerequisites: Git + Node.js LTS) -----------------
 & $choco install -y git nodejs-lts
 $npm = "C:\Program Files\nodejs\npm.cmd"
-# --prefix drops claude.cmd next to node.exe, which is on every user's PATH
-& $npm install -g --prefix "C:\Program Files\nodejs" "@anthropic-ai/claude-code"
+# --prefix drops claude.cmd next to node.exe, which is on every user's PATH.
+# The install occasionally half-fails on first boot (shims written, package
+# missing) — verify the package actually landed and retry once if not.
+foreach ($attempt in 1..2) {
+    & $npm install -g --force --prefix "C:\Program Files\nodejs" "@anthropic-ai/claude-code"
+    if (Test-Path "C:\Program Files\nodejs\node_modules\@anthropic-ai\claude-code") { break }
+    Write-Output "Claude Code install attempt $attempt incomplete - retrying"
+}
 @"
 @echo off
 powershell -NoExit -Command "claude"
@@ -98,7 +104,7 @@ Check "DCV listening on 8443"      { (Test-NetConnection localhost -Port 8443 -W
 Check "Chrome installed"           { Test-Path "C:\Program Files\Google\Chrome\Application\chrome.exe" } "choco install -y googlechrome"
 Check "Java 64-bit installed"      { Test-Path "C:\Program Files\Java" } "choco install -y jre8 (needed by GST emSigner)"
 Check "Java 32-bit installed"      { Test-Path "C:\Program Files (x86)\Java" } "choco install -y jre8 (needed by TRACES WebSigner)"
-Check "Claude Code installed"      { Test-Path "C:\Program Files\nodejs\claude.cmd" } "npm install -g --prefix 'C:\Program Files\nodejs' @anthropic-ai/claude-code"
+Check "Claude Code installed"      { (& "C:\Program Files\nodejs\claude.cmd" --version 2>$null) -match "Claude" } "npm install -g --force --prefix 'C:\Program Files\nodejs' @anthropic-ai/claude-code"
 Check "Tally data folder exists"   { Test-Path "C:\TallyData" } "mkdir C:\TallyData"
 Check "Disk free space > 15 GB"    { (Get-PSDrive C).Free -gt 15GB } "raise volume_size_gb in terraform and apply"
 Check "Internet: GST portal"       { (Test-NetConnection www.gst.gov.in -Port 443 -WarningAction SilentlyContinue).TcpTestSucceeded } "check security group egress / AWS networking"
