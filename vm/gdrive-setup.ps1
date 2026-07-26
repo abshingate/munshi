@@ -54,8 +54,10 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
+# The recurring sync runs through the wrapper, which also maintains the
+# user-visible status file (C:\TallyData\_DriveSyncStatus.txt).
 schtasks /Create /TN "TallyCloudDriveSync" /SC MINUTE /MO 5 /RU SYSTEM /RL HIGHEST /F `
-    /TR "`"$rclone`" --config $conf bisync `"$remote`" C:\TallyData\Drive --create-empty-src-dirs" | Out-Null
+    /TR "powershell -ExecutionPolicy Bypass -File C:\HealthCheck\vm\gdrive-sync.ps1" | Out-Null
 
 Write-Host ""
 Write-Host "Done! From now on:"

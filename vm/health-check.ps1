@@ -14,6 +14,11 @@ Check "DCV listening on 8443"      { (Test-NetConnection localhost -Port 8443 -W
 Check "Chrome installed"           { Test-Path "C:\Program Files\Google\Chrome\Application\chrome.exe" } $fix
 Check "Google Drive sync (rclone)" { Test-Path "C:\ProgramData\chocolatey\bin\rclone.exe" } $fix
 Check "Google Drive sync configured" { Test-Path "C:\ProgramData\rclone\rclone.conf" } "one-time: run 'Set up Google Drive' on the desktop" -WarnOnly
+Check "Google Drive sync healthy"  {
+    if (-not (Test-Path "C:\ProgramData\rclone\rclone.conf")) { $true }
+    elseif (Test-Path "C:\TallyData\_DriveSyncStatus.txt") { -not (Select-String -Path "C:\TallyData\_DriveSyncStatus.txt" -Pattern "SYNC PROBLEM" -Quiet) }
+    else { $true }
+} "see C:\TallyData\_DriveSyncStatus.txt; re-run 'Set up Google Drive' if it persists" -WarnOnly
 Check "Java 64-bit installed"      { Test-Path "C:\Program Files\Java" } $fix
 Check "Java 32-bit installed"      { Test-Path "C:\Program Files (x86)\Java" } $fix
 Check "Claude Code installed"      { (& "C:\Program Files\nodejs\claude.cmd" --version 2>$null) -match "Claude" } $fix
