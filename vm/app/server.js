@@ -259,6 +259,104 @@ async function handle(req, res) {
       return json(res, 200, { ok: true });
     }
 
+    // --- Bank reconciliation ------------------------------------------------
+    if (req.method === "POST" && url.pathname === "/api/recon/upload") {
+      const recon = require("./lib/recon");
+      const tallyLib = require("./lib/tally");
+      const { getProvider } = require("./lib/llm");
+      const body = JSON.parse((await readBody(req)).toString());
+      let lines = null, method = "csv";
+      if (body.text) lines = recon.parseCsvStatement(body.text);
+      if (!lines) {
+        method = "ai-extraction";
+        lines = await recon.llmExtract(getProvider(config), body);
+      }
+      const validation = recon.validateLines(lines);
+      const ledgers = await tallyLib.listLedgers().catch(() => []);
+      const bankLedgers = ledgers.filter((l) => /bank/i.test(l.group)).map((l) => l.name);
+      const dates = lines.map((l) => l.date).sort();
+      const session = recon.newSession({
+        filename: body.filename || "statement", method, lines, validation,
+        from: dates[0], to: dates[dates.length - 1],
+      });
+      return json(res, 200, {
+        reconId: session.id, method, validation,
+        from: session.from, to: session.to, lineCount: lines.length,
+        bankLedgers: bankLedgers.length ? bankLedgers : ledgers.map((l) => l.name).slice(0, 50),
+      });
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/recon/match") {
+      const recon = require("./lib/recon");
+      const tallyLib = require("./lib/tally");
+      const body = JSON.parse((await readBody(req)).toString());
+      const s = recon.getSession(body.reconId);
+      if (!s) return json(res, 404, { error: "reconciliation session not found" });
+      const pad = (d, days) => {
+        const dt = new Date(`${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`);
+        dt.setDate(dt.getDate() + days);
+        return dt.toISOString().slice(0, 10).replace(/-/g, "");
+      };
+      const day = await tallyLib.dayBook(pad(s.from, -20), pad(s.to, 20), config.company || undefined, { includeRaw: true, limit: 500 });
+      const result = require("./lib/recon").matchLines(s.lines, day.vouchers, body.bankLedger);
+      s.bankLedger = body.bankLedger;
+      s.match = {
+        matched: result.matched.map((m) => ({ stmt: m.stmt, reason: m.reason, confidence: m.confidence,
+          voucher: { ...m.voucher, raw: undefined }, raw: m.voucher.raw })),
+        bankOnly: result.bankOnly, bookOnly: result.bookOnly,
+      };
+      s.status = "matched";
+      recon.saveSession(s);
+      const view = {
+        reconId: s.id, bankLedger: body.bankLedger,
+        matched: s.match.matched.map((m, i) => ({ i, stmt: m.stmt, reason: m.reason, confidence: m.confidence,
+          voucher: { date: m.voucher.date, type: m.voucher.type, number: m.voucher.number, narration: m.voucher.narration } })),
+        bankOnly: result.bankOnly, bookOnly: result.bookOnly.map((v) => ({ ...v, raw: undefined })),
+        truncated: day.truncated,
+      };
+      return json(res, 200, view);
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/recon/apply") {
+      const recon = require("./lib/recon");
+      const tallyLib = require("./lib/tally");
+      const body = JSON.parse((await readBody(req)).toString());
+      const s = recon.getSession(body.reconId);
+      if (!s || !s.match) return json(res, 404, { error: "no matched session" });
+      if (s.status === "applied") return json(res, 409, { error: "ticks were already applied for this reconciliation" });
+      const audit = (ev) => fs.appendFileSync(path.join(DATA_DIR, "audit.log"), JSON.stringify({ at: new Date().toISOString(), ...ev }) + "\n");
+      const results = [];
+      for (const m of s.match.matched) {
+        try {
+          if (!m.raw) throw new Error("voucher XML missing");
+          // Pre-capture the financial fingerprint, alter, then VERIFY nothing
+          // but the bank date changed (ADR-0016 safety requirement).
+          const before = m.voucher.ledgerEntries.map((e) => `${e.ledger}|${e.amount}`).join(";");
+          const r = await tallyLib.setBankDate({ rawVoucherXml: m.raw, bankLedger: s.bankLedger, bankersDate: m.stmt.date, company: config.company || undefined });
+          if (!r.ok) throw new Error(r.lineError || "Tally rejected the alteration");
+          const check = await tallyLib.dayBook(m.voucher.date, m.voucher.date, config.company || undefined);
+          const after = check.vouchers.find((v) => v.number === m.voucher.number && v.narration === m.voucher.narration);
+          const afterPrint = after ? after.ledgerEntries.map((e) => `${e.ledger}|${e.amount}`).join(";") : null;
+          if (!after || afterPrint !== before) {
+            audit({ event: "recon_tick_VERIFY_FAILED", recon: s.id, voucher: m.voucher.number, before, after: afterPrint });
+            results.push({ voucher: m.voucher.number, ok: false, error: "post-alter verification failed — STOPPED; check this voucher in Tally" });
+            break; // stop the batch immediately on any verification failure
+          }
+          audit({ event: "recon_tick_applied", recon: s.id, voucher: m.voucher.number, bankDate: m.stmt.date, stmt: m.stmt, reason: m.reason });
+          results.push({ voucher: m.voucher.number, ok: true });
+        } catch (err) {
+          audit({ event: "recon_tick_failed", recon: s.id, voucher: m.voucher && m.voucher.number, error: err.message });
+          results.push({ voucher: m.voucher && m.voucher.number, ok: false, error: err.message });
+          break;
+        }
+      }
+      const allOk = results.length === s.match.matched.length && results.every((r) => r.ok);
+      s.status = allOk ? "applied" : "apply-incomplete";
+      s.applyResults = results;
+      recon.saveSession(s);
+      return json(res, 200, { ok: allOk, results });
+    }
+
     if (req.method === "GET" && url.pathname === "/api/docs") {
       const rootKey = url.searchParams.get("root") || "documents";
       const rel = url.searchParams.get("path") || "";

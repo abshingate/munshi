@@ -4,6 +4,20 @@ All notable changes to this project are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versioning: [SemVer](https://semver.org/).
 
+## [1.9.0] - 2026-07-26
+
+### Added
+
+- **Bank reconciliation** (menu → 🏦; ADR-0016/0017): upload a statement
+  (CSV parsed in code; PDF/photo read by AI with deterministic validation
+  incl. running-balance continuity), pure-code matching against the Tally
+  bank ledger (reference-number and amount/date passes), four-bucket report,
+  one-tap application of bank-date ticks in Tally with per-voucher
+  financial-fingerprint verification (batch stops on any discrepancy), and
+  "Draft entry" handoff to Munshi for statement lines missing from the
+  books. Parser/matcher covered by a local test; live Tally path awaits an
+  open company.
+
 ## [1.8.0] - 2026-07-26
 
 ### Added

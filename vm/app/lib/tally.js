@@ -70,24 +70,68 @@ async function listLedgers() {
   })).filter((l) => l.name);
 }
 
-// dates: YYYYMMDD strings
-async function dayBook(fromDate, toDate, company) {
+// dates: YYYYMMDD strings. opts.includeRaw keeps the full voucher XML block
+// (needed for the reconciliation bank-date alteration round-trip).
+async function dayBook(fromDate, toDate, company, opts = {}) {
   const comp = company ? `<SVCURRENTCOMPANY>${esc(company)}</SVCURRENTCOMPANY>` : "";
   const xml = await post(
     `<ENVELOPE><HEADER><VERSION>1</VERSION><TALLYREQUEST>Export</TALLYREQUEST><TYPE>Data</TYPE><ID>Day Book</ID></HEADER><BODY><DESC><STATICVARIABLES><SVEXPORTFORMAT>$$SysName:XML</SVEXPORTFORMAT><SVFROMDATE>${esc(fromDate)}</SVFROMDATE><SVTODATE>${esc(toDate)}</SVTODATE>${comp}</STATICVARIABLES></DESC></BODY></ENVELOPE>`
   );
-  const vouchers = blocks(xml, "VOUCHER").slice(0, 200).map((b) => ({
-    date: tagValues(b, "DATE")[0] || "",
-    type: tagValues(b, "VOUCHERTYPENAME")[0] || "",
-    number: tagValues(b, "VOUCHERNUMBER")[0] || "",
-    party: tagValues(b, "PARTYLEDGERNAME")[0] || "",
-    narration: tagValues(b, "NARRATION")[0] || "",
-    ledgerEntries: tagValues(b, "LEDGERNAME").map((name, i) => ({
-      ledger: name,
-      amount: tagValues(b, "AMOUNT")[i] || "",
-    })),
-  }));
-  return { count: vouchers.length, truncated: blocks(xml, "VOUCHER").length > 200, vouchers };
+  const cap = opts.limit || 200;
+  const vouchers = blocks(xml, "VOUCHER").slice(0, cap).map((b) => {
+    const remoteM = b.match(/<VOUCHER[^>]*REMOTEID="([^"]*)"/i);
+    return {
+      date: tagValues(b, "DATE")[0] || "",
+      type: tagValues(b, "VOUCHERTYPENAME")[0] || "",
+      number: tagValues(b, "VOUCHERNUMBER")[0] || "",
+      party: tagValues(b, "PARTYLEDGERNAME")[0] || "",
+      narration: tagValues(b, "NARRATION")[0] || "",
+      remoteId: remoteM ? remoteM[1] : "",
+      ledgerEntries: tagValues(b, "LEDGERNAME").map((name, i) => ({
+        ledger: name,
+        amount: tagValues(b, "AMOUNT")[i] || "",
+      })),
+      ...(opts.includeRaw ? { raw: b } : {}),
+    };
+  });
+  return { count: vouchers.length, truncated: blocks(xml, "VOUCHER").length > cap, vouchers };
+}
+
+// ADR-0016: the ONLY permitted alteration — set the bank date (reconciliation
+// tick) on an existing voucher. Takes the voucher's own full exported XML,
+// changes ACTION to Alter, and injects BANKERSDATE into the bank ledger's
+// allocations; nothing else in the voucher is modified. Caller MUST verify
+// afterwards (re-export and compare financials) — see server /api/recon/apply.
+async function setBankDate({ rawVoucherXml, bankLedger, bankersDate, company }) {
+  if (!rawVoucherXml || !/^<VOUCHER[\s>]/i.test(rawVoucherXml.trim())) throw new Error("missing voucher XML");
+  let v = rawVoucherXml.trim();
+  // Force ACTION="Alter" on the opening tag
+  v = v.replace(/^<VOUCHER([^>]*?)( ACTION="[^"]*")?([^>]*)>/i, `<VOUCHER$1$3 ACTION="Alter">`);
+
+  // Locate the ALLLEDGERENTRIES.LIST for the bank ledger
+  const entryRe = /<ALLLEDGERENTRIES\.LIST>[\s\S]*?<\/ALLLEDGERENTRIES\.LIST>/gi;
+  let found = false;
+  v = v.replace(entryRe, (block) => {
+    const nameM = block.match(/<LEDGERNAME[^>]*>([\s\S]*?)<\/LEDGERNAME>/i);
+    if (!nameM || nameM[1].trim().toLowerCase() !== bankLedger.toLowerCase() || found) return block;
+    found = true;
+    const vchDate = (rawVoucherXml.match(/<DATE[^>]*>(\d{8})<\/DATE>/i) || [])[1] || bankersDate;
+    if (/<BANKALLOCATIONS\.LIST>/i.test(block)) {
+      if (/<BANKERSDATE[^>]*>/i.test(block)) {
+        return block.replace(/<BANKERSDATE[^>]*>[\s\S]*?<\/BANKERSDATE>/i, `<BANKERSDATE>${esc(bankersDate)}</BANKERSDATE>`);
+      }
+      return block.replace(/<BANKALLOCATIONS\.LIST>/i, `<BANKALLOCATIONS.LIST><BANKERSDATE>${esc(bankersDate)}</BANKERSDATE>`);
+    }
+    return block.replace(/<\/ALLLEDGERENTRIES\.LIST>/i,
+      `<BANKALLOCATIONS.LIST><DATE>${esc(vchDate)}</DATE><BANKERSDATE>${esc(bankersDate)}</BANKERSDATE></BANKALLOCATIONS.LIST></ALLLEDGERENTRIES.LIST>`);
+  });
+  if (!found) throw new Error(`Bank ledger '${bankLedger}' not found in the voucher`);
+
+  const comp = company ? `<SVCURRENTCOMPANY>${esc(company)}</SVCURRENTCOMPANY>` : "";
+  const res = await post(
+    `<ENVELOPE><HEADER><TALLYREQUEST>Import Data</TALLYREQUEST></HEADER><BODY><IMPORTDATA><REQUESTDESC><REPORTNAME>Vouchers</REPORTNAME><STATICVARIABLES>${comp}</STATICVARIABLES></REQUESTDESC><REQUESTDATA><TALLYMESSAGE xmlns:UDF="TallyUDF">${v}</TALLYMESSAGE></REQUESTDATA></IMPORTDATA></BODY></ENVELOPE>`
+  );
+  return importResult(res);
 }
 
 async function createLedger({ name, group, company }) {
@@ -127,4 +171,4 @@ function importResult(xml) {
   return { created, altered, errors, lineError: lineError || undefined, ok: errors === 0 && (created > 0 || altered > 0) };
 }
 
-module.exports = { isOnline, listCompanies, listLedgers, dayBook, createLedger, createVoucher };
+module.exports = { isOnline, listCompanies, listLedgers, dayBook, createLedger, createVoucher, setBankDate };

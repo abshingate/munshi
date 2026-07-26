@@ -32,3 +32,4 @@ never delete or rewrite history, add a new record).
 | [0014](0014-tally-edition-editlog-default.md) | Tally edition configurable, defaulting to Edit Log (MCA audit trail) | accepted |
 | [0015](0015-google-drive-via-rclone.md) | Google Drive sync via rclone (official client unsupported on Windows Server) | accepted |
 | [0016](0016-bank-date-reconciliation-exception.md) | Narrow alteration exception: bank-date tick for reconciliation (amends 0011) | accepted |
+| [0017](0017-reconciliation-architecture.md) | Reconciliation: code matches, LLM extracts, alterations fingerprint-verified | accepted |

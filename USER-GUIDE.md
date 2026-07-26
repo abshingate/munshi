@@ -211,6 +211,16 @@ No. It turns itself off after ~1 hour of inactivity and emails you. There is
 also a monthly budget alarm: if spending ever heads past about Rs. 2,000, you
 get a warning email long before it becomes a problem.
 
+**How do I match my bank statement with my books?**
+In the AI accountant app: menu (⋯) → **Bank reconciliation**. Upload your
+bank statement (CSV from netbanking is best; a PDF or clear photo also
+works). It compares every line against your Tally entries and shows three
+piles: **matched** (tap once to mark them reconciled in Tally — each one is
+double-checked after marking), **in bank but not in books** (tap "Draft
+entry" and Munshi proposes it — you confirm as usual), and **in books but
+not in bank** (usually cheques not yet presented — just review). Do this
+once a month and your books and bank always agree.
+
 **Where do I see all my filed bills?**
 In the AI accountant app, tap the **📁 button** at the top — a file browser
 opens with all your filed bills (organized by year and month) and the Drive

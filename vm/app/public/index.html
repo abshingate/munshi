@@ -130,6 +130,22 @@
   </div>
 </div>
 
+<!-- Bank reconciliation -->
+<div id="reconPanel" class="hidden fixed inset-0 z-30 bg-slate-100 flex flex-col">
+  <div class="shrink-0 bg-navy text-white pt-[env(safe-area-inset-top)]">
+    <div class="max-w-2xl mx-auto flex items-center gap-3 px-4 py-2.5">
+      <button id="reconClose" aria-label="Close" class="w-9 h-9 rounded-lg bg-white/10 active:scale-95 transition grid place-items-center text-lg">←</button>
+      <div class="flex-1">
+        <div class="font-semibold text-[15px]">Bank reconciliation</div>
+        <div class="text-[11px] text-white/70">Match your bank statement against Tally</div>
+      </div>
+    </div>
+  </div>
+  <div class="flex-1 overflow-y-auto">
+    <div id="reconBody" class="max-w-2xl mx-auto px-4 py-4 pb-[env(safe-area-inset-bottom)]"></div>
+  </div>
+</div>
+
 <!-- Modal / bottom sheet host -->
 <div id="modalHost" class="hidden fixed inset-0 z-40 bg-black/40 flex items-end sm:items-center justify-center" role="dialog" aria-modal="true">
   <div id="modalCard" class="sheet bg-white w-full sm:max-w-sm rounded-t-2xl sm:rounded-2xl p-5 pb-[max(env(safe-area-inset-bottom),1.25rem)]"></div>
@@ -528,6 +544,9 @@
         try { await api("/api/refresh", {}); toast("Knowledge refreshed from Tally", "success"); refreshStatus(); }
         catch (err) { toast(err.message, "error"); }
       });
+      mk("🏦 Bank reconciliation", "Match a bank statement against your Tally entries", async () => {
+        openRecon();
+      });
       mk("🔒 Lock app", "Ask for the passcode again on this device", async () => {
         try { await api("/api/logout", {}); location.reload(); } catch (err) { toast(err.message, "error"); }
       });
@@ -543,6 +562,144 @@
         });
       }, true);
     });
+  }
+
+  // ---------- bank reconciliation ----------
+  const recon = { id: null };
+  function reconEl(html) { const d = el("div"); d.innerHTML = html; return d; }
+  function openRecon() {
+    $("reconPanel").classList.remove("hidden");
+    reconStepUpload();
+  }
+  $("reconClose").addEventListener("click", () => $("reconPanel").classList.add("hidden"));
+
+  function reconStepUpload() {
+    const b = $("reconBody");
+    b.innerHTML = "";
+    const card = el("div", "bg-white border border-slate-200 rounded-2xl p-5");
+    card.appendChild(el("h3", "text-base font-bold text-navy mb-1", "1 · Upload your bank statement"));
+    card.appendChild(el("p", "text-sm text-slate-500 mb-4", "CSV works best (download from netbanking). PDF or a clear photo also works — I'll read it and double-check the numbers."));
+    const inp = document.createElement("input");
+    inp.type = "file"; inp.accept = ".csv,.txt,.pdf,image/*";
+    inp.className = "w-full text-sm";
+    card.appendChild(inp);
+    const status = el("div", "text-sm text-slate-500 mt-4 min-h-5");
+    card.appendChild(status);
+    b.appendChild(card);
+    inp.addEventListener("change", async () => {
+      const f = inp.files[0];
+      if (!f) return;
+      status.textContent = "Reading statement…";
+      try {
+        let payload = { filename: f.name };
+        if (/\.(csv|txt)$/i.test(f.name)) payload.text = await f.text();
+        else {
+          const buf = new Uint8Array(await f.arrayBuffer());
+          let bin = ""; for (const x of buf) bin += String.fromCharCode(x);
+          payload.data = btoa(bin);
+          payload.media_type = f.type || (f.name.toLowerCase().endsWith(".pdf") ? "application/pdf" : "image/jpeg");
+        }
+        const r = await api("/api/recon/upload", payload);
+        recon.id = r.reconId;
+        reconStepLedger(r);
+      } catch (err) { status.textContent = ""; toast(err.message, "error", 6000); }
+    });
+  }
+
+  function reconStepLedger(r) {
+    const b = $("reconBody");
+    b.innerHTML = "";
+    const card = el("div", "bg-white border border-slate-200 rounded-2xl p-5");
+    card.appendChild(el("h3", "text-base font-bold text-navy mb-1", "2 · Statement read — pick the bank ledger"));
+    card.appendChild(el("p", "text-sm text-slate-600 mb-1", `${r.lineCount} transactions, ${fmtDate(r.from)} to ${fmtDate(r.to)} (read via ${r.method === "csv" ? "CSV parser" : "AI + validation"}).`));
+    if (r.validation && r.validation.balanceChecked) card.appendChild(el("p", "text-xs text-emerald-700 mb-2", "✓ Running-balance arithmetic verified across the statement."));
+    for (const w of (r.validation && r.validation.warnings) || []) card.appendChild(el("p", "text-xs text-amber-700 mb-1", "⚠ " + w));
+    card.appendChild(el("label", "block text-xs font-semibold text-slate-600 mt-3 mb-1", "Which Tally ledger is this bank account?"));
+    const sel = document.createElement("select");
+    sel.className = "w-full rounded-xl border border-slate-300 px-3 py-3 text-base bg-white";
+    for (const l of r.bankLedgers) { const o = document.createElement("option"); o.value = o.textContent = l; sel.appendChild(o); }
+    card.appendChild(sel);
+    const go = el("button", "w-full mt-4 rounded-xl bg-navy text-white font-semibold py-3 active:scale-[.98] transition", "Run matching");
+    card.appendChild(go);
+    b.appendChild(card);
+    go.addEventListener("click", async () => {
+      go.disabled = true; go.textContent = "Matching…";
+      try { reconStepReport(await api("/api/recon/match", { reconId: recon.id, bankLedger: sel.value })); }
+      catch (err) { go.disabled = false; go.textContent = "Run matching"; toast(err.message, "error", 6000); }
+    });
+  }
+
+  function reconStepReport(r) {
+    const b = $("reconBody");
+    b.innerHTML = "";
+    const sum = el("div", "grid grid-cols-3 gap-2 mb-4");
+    const tile = (n, label, cls) => {
+      const t = el("div", `rounded-xl p-3 text-center ${cls}`);
+      t.appendChild(el("div", "text-xl font-bold", String(n)));
+      t.appendChild(el("div", "text-[11px]", label));
+      return t;
+    };
+    sum.append(
+      tile(r.matched.length, "Matched", "bg-emerald-50 text-emerald-800 border border-emerald-200"),
+      tile(r.bankOnly.length, "In bank, not in books", "bg-amber-50 text-amber-800 border border-amber-200"),
+      tile(r.bookOnly.length, "In books, not in bank", "bg-slate-50 text-slate-600 border border-slate-200"),
+    );
+    b.appendChild(sum);
+    if (r.truncated) b.appendChild(el("p", "text-xs text-amber-700 mb-3", "⚠ Very large period — only the first 500 book entries were compared."));
+
+    if (r.matched.length) {
+      const card = el("div", "bg-white border border-emerald-200 rounded-2xl p-4 mb-4");
+      card.appendChild(el("h3", "text-sm font-bold text-emerald-800 mb-2", `✅ Matched (${r.matched.length}) — apply reconciliation ticks in Tally`));
+      for (const m of r.matched.slice(0, 50)) {
+        const row = el("div", "text-xs text-slate-600 py-1.5 border-b border-dashed border-slate-100");
+        row.textContent = `${fmtDate(m.stmt.date)} · ${fmtAmt(m.stmt.amount)} ${m.stmt.direction === "credit" ? "in" : "out"} ↔ ${m.voucher.type} ${m.voucher.number || ""} (${m.reason})`;
+        card.appendChild(row);
+      }
+      const apply = el("button", "w-full mt-3 rounded-xl bg-emerald-600 text-white font-semibold py-3 active:scale-[.98] transition", `✓ Confirm matches & tick ${r.matched.length} entries in Tally`);
+      card.appendChild(apply);
+      apply.addEventListener("click", async () => {
+        apply.disabled = true; apply.textContent = "Applying & verifying…";
+        try {
+          const res = await api("/api/recon/apply", { reconId: recon.id });
+          const okN = res.results.filter((x) => x.ok).length;
+          apply.textContent = res.ok ? `✅ ${okN} entries ticked & verified` : `⚠️ Stopped after ${okN} — ${res.results.find((x) => !x.ok).error}`;
+          toast(res.ok ? "Reconciliation ticks applied & verified" : "Apply stopped — see the report", res.ok ? "success" : "error", 6000);
+        } catch (err) { apply.disabled = false; apply.textContent = "✓ Confirm & tick"; toast(err.message, "error", 6000); }
+      });
+      b.appendChild(card);
+    }
+
+    if (r.bankOnly.length) {
+      const card = el("div", "bg-white border border-amber-300 rounded-2xl p-4 mb-4");
+      card.appendChild(el("h3", "text-sm font-bold text-amber-800 mb-1", `🟡 In bank but not in your books (${r.bankOnly.length})`));
+      card.appendChild(el("p", "text-xs text-slate-500 mb-2", "Usually bank charges, interest, or receipts nobody entered. Ask Munshi to draft each one — you confirm as usual."));
+      for (const l of r.bankOnly.slice(0, 50)) {
+        const row = el("div", "flex items-center gap-2 py-1.5 border-b border-dashed border-slate-100");
+        row.appendChild(el("div", "flex-1 text-xs text-slate-700", `${fmtDate(l.date)} · ${fmtAmt(l.amount)} ${l.direction === "credit" ? "in" : "out"} · ${l.description || "(no description)"}`));
+        const ask = el("button", "shrink-0 rounded-lg bg-navy text-white text-xs font-semibold px-3 py-1.5 active:scale-95 transition", "Draft entry");
+        ask.addEventListener("click", () => {
+          $("reconPanel").classList.add("hidden");
+          $("input").value = `From my bank statement (${sel_ledger_name()}): on ${fmtDate(l.date)}, ${fmtAmt(l.amount)} ${l.direction === "credit" ? "came into" : "went out of"} the bank — description: "${l.description}". Propose the correct entry.`;
+          send();
+        });
+        row.appendChild(ask);
+        card.appendChild(row);
+      }
+      b.appendChild(card);
+    }
+
+    if (r.bookOnly.length) {
+      const card = el("div", "bg-white border border-slate-200 rounded-2xl p-4 mb-4");
+      card.appendChild(el("h3", "text-sm font-bold text-slate-700 mb-1", `⚪ In your books but not in the bank (${r.bookOnly.length})`));
+      card.appendChild(el("p", "text-xs text-slate-500 mb-2", "Often cheques issued but not yet presented — usually fine; investigate if old."));
+      for (const v of r.bookOnly.slice(0, 50)) {
+        card.appendChild(el("div", "text-xs text-slate-600 py-1.5 border-b border-dashed border-slate-100",
+          `${fmtDate(v.date)} · ${v.type} ${v.number || ""} · ${fmtAmt(v.bankAmount)} ${v.moneyIn ? "in" : "out"} · ${v.narration || v.party || ""}`));
+      }
+      b.appendChild(card);
+    }
+    let _ledger = r.bankLedger;
+    window.sel_ledger_name = () => _ledger;
   }
 
   // ---------- events ----------
