@@ -1,0 +1,19 @@
+name: External URL check
+
+# Early warning when a vendor moves or removes a download the bootstrap
+# depends on — the workflow fails and GitHub emails the maintainers, so the
+# repo gets fixed before any user hits a dead link.
+on:
+  schedule:
+    - cron: "0 3 * * 1" # every Monday 03:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linkcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash scripts/check-urls.sh

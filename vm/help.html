@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Help &amp; User Guide — Tally Cloud Workstation</title>
+<style>
+  :root { --navy:#18263a; --gold:#f0b232; --ink:#22303f; --soft:#f4f6f9; }
+  * { box-sizing: border-box; }
+  body { font-family: "Segoe UI", Arial, sans-serif; margin: 0; color: var(--ink); background: var(--soft); font-size: 17px; line-height: 1.55; }
+  header { background: var(--navy); color: #fff; padding: 28px 40px; border-bottom: 6px solid var(--gold); }
+  header h1 { margin: 0; font-size: 30px; }
+  header p { margin: 6px 0 0; opacity: .85; }
+  nav { background:#fff; padding: 12px 40px; border-bottom: 1px solid #dde3ea; position: sticky; top: 0; }
+  nav a { margin-right: 18px; color: #14508c; text-decoration: none; font-weight: 600; }
+  main { max-width: 900px; margin: 0 auto; padding: 30px 24px 80px; }
+  h2 { color: var(--navy); border-bottom: 2px solid var(--gold); padding-bottom: 6px; margin-top: 44px; }
+  code, kbd { background: #e8edf3; padding: 2px 7px; border-radius: 4px; font-size: 15px; }
+  table { border-collapse: collapse; width: 100%; background: #fff; margin: 14px 0; }
+  th, td { border: 1px solid #d7dee6; padding: 10px 12px; text-align: left; vertical-align: top; }
+  th { background: var(--navy); color: #fff; }
+  .card { background:#fff; border:1px solid #d7dee6; border-left: 6px solid var(--gold); padding: 14px 18px; margin: 14px 0; border-radius: 6px; }
+  .ok { color: #1b7a3d; font-weight: 700; } .bad { color: #b3261e; font-weight: 700; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Help &amp; User Guide</h1>
+  <p>Tally Cloud Workstation — everything you need to know, in one page. Works offline.</p>
+</header>
+<nav>
+  <a href="#start">First time</a>
+  <a href="#daily">Daily use</a>
+  <a href="#desktop">What's on the desktop</a>
+  <a href="#dsc">DSC signing</a>
+  <a href="#trouble">Troubleshooting</a>
+  <a href="#faq">FAQ</a>
+</nav>
+<main>
+
+<h2 id="start">First time on this computer</h2>
+<div class="card">
+  <b>Step 1:</b> A Tally installation window opens by itself — click <b>Install</b>, keep
+  clicking Next. When it asks where to keep <b>DATA</b>, choose <code>C:\TallyData</code>.<br>
+  <b>Step 2:</b> Open Tally and activate your license (serial number + Tally.net login).<br>
+  That's it — everything else is already installed.
+</div>
+
+<h2 id="daily">Daily use</h2>
+<ul>
+  <li><b>Your data:</b> keep every Tally company inside <code>C:\TallyData</code>. It is
+      backed up automatically <b>every night at 2 AM</b> (last 14 nights kept).</li>
+  <li><b>Switching off:</b> just close your browser tab or click Stop from where you
+      started the machine. This computer also switches itself off after about an hour
+      of inactivity. <b>Nothing is ever lost.</b></li>
+  <li><b>Government portals:</b> open the <b>Govt Portals</b> folder on the desktop —
+      GST, Income Tax, TRACES (TDS), EPFO (PF), ESIC, MCA.</li>
+</ul>
+
+<h2 id="desktop">What's on the desktop</h2>
+<table>
+  <tr><th>Icon</th><th>What it does</th></tr>
+  <tr><td><b>Check System Health</b></td><td>Tests every part of this computer and prints <span class="ok">PASS</span> or <span class="bad">FAIL</span> for each, with the fix.</td></tr>
+  <tr><td><b>Repair This Computer</b></td><td>Re-installs anything broken or missing, by itself. Takes a few minutes. Safe to run any time.</td></tr>
+  <tr><td><b>Help and User Guide</b></td><td>This page.</td></tr>
+  <tr><td><b>Claude Code</b></td><td>An AI assistant that runs on this computer. Sign in once with your Anthropic account.</td></tr>
+  <tr><td><b>Govt Portals</b> (folder)</td><td>One-click links to every government website you need.</td></tr>
+  <tr><td><b>DSC Setup</b> (folder)</td><td>Signing tools: emSigner/emBridge links, your token brand's driver, VirtualHere.</td></tr>
+  <tr><td><b>Download TallyPrime</b></td><td>Official Tally download page — only needed if the staged installer is missing.</td></tr>
+</table>
+<p>The desktop <b>wallpaper</b> shows live facts about this machine — software versions,
+key folder locations, and what to do when something breaks. It refreshes at every login.</p>
+
+<h2 id="dsc">Signing with your DSC (USB token)</h2>
+<p>The token stays plugged into <b>your own computer at home</b> and reaches this
+computer over the internet:</p>
+<table>
+  <tr><th>You connect from</th><th>How to use the DSC</th></tr>
+  <tr><td>Windows laptop</td><td>Use the <b>Remote Desktop</b> app. Before connecting, open its settings → <i>Local Resources</i> → tick <b>Smart cards</b>. Done — portals see your token.</td></tr>
+  <tr><td>Mac / browser</td><td>Use <b>VirtualHere</b> (in the DSC Setup folder; free for one device). Server part runs on your Mac, the client here. One-time setup.</td></tr>
+  <tr><td>No DSC at all</td><td>GST and Income-tax accept an <b>OTP on your Aadhaar-linked mobile</b> — allowed for proprietorships and partnerships. Companies/LLPs must use a DSC.</td></tr>
+</table>
+<p><b>First time only:</b> install your token's driver from the DSC Setup folder
+(ePass2003 / ProxKey / mToken — pick your brand). Each portal's signing tool
+(GST emSigner, TRACES WebSigner, MCA emBridge) can only be downloaded after you log
+in to that portal with your own account — one double-click, first use only.
+The 32-bit Java they need is already installed.</p>
+
+<h2 id="trouble">Troubleshooting</h2>
+<table>
+  <tr><th>Problem</th><th>Fix</th></tr>
+  <tr><td>Something doesn't open / is missing</td><td>Double-click <b>Check System Health</b>. Any <span class="bad">FAIL</span> line → double-click <b>Repair This Computer</b>, wait, check again.</td></tr>
+  <tr><td>Browser shows "connection not private" when connecting here</td><td>Normal and safe — this is your own private computer, not a public website. Click <b>Advanced → Proceed/Continue</b>.</td></tr>
+  <tr><td>Can't connect at all from home</td><td>Your internet provider likely changed your home address. On the computer with the setup folder, double-click <b>4 - Fix Connection Problem</b>.</td></tr>
+  <tr><td>The address (https://…:8443) stopped working</td><td>The address <b>changes every time</b> the machine is switched on. Always use the newest one shown by <b>1 - Turn ON Tally Computer</b>.</td></tr>
+  <tr><td>Portal says emSigner/WebSigner not running</td><td>Start it from the Start menu (installed after your first portal login), then refresh the portal page.</td></tr>
+  <tr><td>Tally asks about the license again</td><td>Choose <b>Reactivate</b> and log in with your Tally.net ID.</td></tr>
+  <tr><td>Deleted something in Tally by mistake</td><td>A full backup exists for each of the last 14 nights. Ask whoever manages this setup to restore yesterday's copy.</td></tr>
+  <tr><td>Machine turned off by itself while working</td><td>It stops after ~1 hour without activity. Just turn it on again — everything is exactly where it was. (Tally saves as you type.)</td></tr>
+</table>
+
+<h2 id="faq">Common questions</h2>
+<p><b>Will I get a huge bill if I forget to switch off?</b><br>
+No. It stops itself after ~1 hour idle and emails the owner. A monthly budget alarm
+warns long before spending becomes a problem.</p>
+<p><b>Is my data safe when the computer is off?</b><br>
+Yes — the disk is permanent and encrypted, and backed up nightly. Off only means
+"not paying for the hours".</p>
+<p><b>Can I use this from my phone or another computer?</b><br>
+Yes, from anywhere — you only need the current address and the password.</p>
+<p><b>Who do I call?</b><br>
+Whoever set this up for you. Show them the <b>Check System Health</b> result — it
+tells them exactly what's wrong. This system is open source:
+<code>github.com/abshingate/tally-cloud-workstation</code></p>
+
+</main>
+</body>
+</html>

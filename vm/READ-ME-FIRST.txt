@@ -1,0 +1,51 @@
+WELCOME! READ THIS FIRST (5 minutes)
+====================================
+
+This is your accounting computer. Everything you need is already here.
+Nothing you save is ever lost - even when the computer is switched off,
+and a backup copy is taken automatically every night at 2 AM.
+
+DOING THIS FOR THE FIRST TIME? Just 2 steps:
+
+  STEP 1: A Tally installation window opens by itself.
+          Click Install and keep clicking Next.
+          One important thing: when it asks where to keep DATA,
+          choose:  C:\TallyData
+
+  STEP 2: Open Tally (icon on this desktop) and enter your
+          Tally serial number and Tally.net login to activate it.
+
+That's it. You are ready.
+
+NEED MORE HELP AT ANY TIME?
+  Double-click "Help and User Guide" on this desktop - a full manual
+  with troubleshooting that works even without internet.
+  The desktop WALLPAPER also shows where everything is and what to do
+  if something breaks.
+
+WHERE IS EVERYTHING?
+  - Tally            : icon on this desktop
+  - Government sites : "Govt Portals" folder on this desktop
+                       (GST, Income Tax, TDS, PF, ESIC, MCA - just double-click)
+  - Chrome browser   : on this desktop
+  - Your data        : always keep it in C:\TallyData
+
+IS SOMETHING NOT WORKING?
+  1. Double-click "Check System Health" - every line says PASS or FAIL.
+  2. If anything says FAIL: double-click "Repair This Computer" and wait.
+     It re-installs whatever is broken or missing, by itself.
+  3. Still broken? Show the result to whoever manages this computer.
+
+SIGNING WITH YOUR DSC (the USB token):
+  See the "DSC signing" section in "Help and User Guide" - short version:
+  - From a Windows laptop: Remote Desktop -> Local Resources -> Smart cards.
+  - From a Mac: VirtualHere (in the "DSC Setup" folder; one-time setup).
+  - Many filings need no DSC: GST/Income-tax accept an Aadhaar OTP
+    (proprietorship/partnership only).
+  First time only: install your token's driver from "DSC Setup".
+
+EXTRA: "Claude Code" on this desktop is an AI assistant that can help you
+right on this computer - double-click it and sign in once.
+
+Don't worry about switching off - this computer turns itself off when you
+stop using it, and everything will be exactly here when you come back.

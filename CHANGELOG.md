@@ -4,6 +4,31 @@ All notable changes to this project are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versioning: [SemVer](https://semver.org/).
 
+## [1.1.0] - 2026-07-26
+
+### Added
+
+- **Self-healing VM**: all VM logic moved to `vm/` and delivered via a
+  private, Terraform-managed S3 assets bucket; the VM re-syncs and runs an
+  idempotent `repair.ps1` at every boot, via the new "Repair This Computer"
+  desktop button, and remotely via `scripts/repair.sh`.
+- **Dynamic TallyPrime URL discovery** from Tally's own site (newest release
+  wins) with known-good mirror fallbacks.
+- **Info wallpaper** (BGInfo-style, self-rendered): key locations, live
+  software versions, and what-to-do steps; refreshes at every login.
+- **Local help website** on the VM ("Help and User Guide" desktop shortcut):
+  full manual, troubleshooting table, and FAQ — works offline.
+- **Weekly external-URL check** (`linkcheck.yml` + `scripts/check-urls.sh`)
+  alerting maintainers when a vendor download location moves.
+- Health check extended: Claude Code verified by execution; wallpaper, help
+  page, and self-repair task now checked.
+
+### Fixed
+
+- Claude Code first-boot install could half-fail (shims without package);
+  now verified and retried.
+- Adobe Reader detection for the 64-bit unified install path.
+
 ## [1.0.0] - 2026-07-26
 
 ### Added

@@ -88,7 +88,7 @@ else
     echo "== On-VM health check (via SSM) =="
     CMD=$(aws ssm send-command --region "$REGION" --instance-ids "$ID" \
       --document-name "AWS-RunPowerShellScript" \
-      --parameters 'commands=["powershell -ExecutionPolicy Bypass -File C:\\HealthCheck\\health-check.ps1"]' \
+      --parameters 'commands=["powershell -ExecutionPolicy Bypass -File C:\\HealthCheck\\vm\\health-check.ps1"]' \
       --query 'Command.CommandId' --output text)
     for _ in $(seq 1 30); do
       ST=$(aws ssm get-command-invocation --region "$REGION" --command-id "$CMD" \

@@ -44,6 +44,45 @@ resource "aws_route_table_association" "public" {
   route_table_id = aws_route_table.public.id
 }
 
+# --- Assets bucket: VM scripts/content live here, not in 16KB user-data -----
+# The VM re-syncs from this bucket at every boot, so `terraform apply`
+# (which re-uploads changed files) + a reboot or repair updates the machine.
+
+data "aws_caller_identity" "current" {}
+
+# Versioning/logging omitted: contents are generated from this repo (git is
+# the version history) and re-uploaded by terraform on every change.
+#tfsec:ignore:aws-s3-enable-versioning
+#tfsec:ignore:aws-s3-enable-bucket-logging
+resource "aws_s3_bucket" "assets" {
+  bucket = "${var.name}-assets-${data.aws_caller_identity.current.account_id}"
+}
+
+resource "aws_s3_bucket_public_access_block" "assets" {
+  bucket                  = aws_s3_bucket.assets.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "assets" {
+  bucket = aws_s3_bucket.assets.id
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_object" "vm_files" {
+  for_each = fileset("${path.module}/vm", "**")
+  bucket   = aws_s3_bucket.assets.id
+  key      = "vm/${each.value}"
+  source   = "${path.module}/vm/${each.value}"
+  etag     = filemd5("${path.module}/vm/${each.value}")
+}
+
 # Always-current Windows Server 2022 AMI, resolved via AWS's public SSM parameter
 data "aws_ssm_parameter" "windows_ami" {
   name = "/aws/service/ami-windows-latest/Windows_Server-2022-English-Full-Base"
@@ -147,6 +186,27 @@ resource "aws_iam_role_policy" "dcv_license" {
   })
 }
 
+# Read access to the assets bucket (VM pulls its scripts from there)
+resource "aws_iam_role_policy" "assets" {
+  name = "vm-assets"
+  role = aws_iam_role.instance.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["s3:GetObject"]
+        Resource = "${aws_s3_bucket.assets.arn}/*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["s3:ListBucket"]
+        Resource = aws_s3_bucket.assets.arn
+      }
+    ]
+  })
+}
+
 resource "aws_iam_instance_profile" "this" {
   name = "${var.name}-profile"
   role = aws_iam_role.instance.name
@@ -164,7 +224,11 @@ resource "aws_instance" "this" {
   #tfsec:ignore:aws-ec2-associate-public-ip-address
   associate_public_ip_address = true
   disable_api_termination     = true
-  user_data                   = file("${path.module}/userdata.ps1")
+  user_data = replace(
+    file("${path.module}/userdata.ps1"),
+    "__ASSETS_BUCKET__",
+    aws_s3_bucket.assets.bucket
+  )
 
   metadata_options {
     http_tokens = "required"

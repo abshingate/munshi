@@ -115,16 +115,25 @@ It gets "beamed" to the cloud computer:
   **OTP on your Aadhaar-linked mobile** instead, if your firm is a
   proprietorship or partnership. Companies and LLPs must use the DSC.
 
-## Is everything working? (health check)
+## Is everything working? (health check + self-repair)
 
-Two ways, both safe to run any time:
+Two ways to check, both safe to run any time:
 
 - On your Mac: double-click **`3 - Check Everything OK`**.
 - On the cloud computer's desktop: double-click **"Check System Health"**.
 
 Every line says **PASS** (good), **WARN** (fine, just information) or **FAIL**
-(a problem — the same line tells you the fix, or show it to whoever manages
-this for you).
+(a problem). If anything says FAIL, the fix is usually one double-click:
+**"Repair This Computer"** on the cloud computer's desktop — it re-installs
+whatever is broken or missing, by itself, and also runs automatically every
+time the computer starts.
+
+More help lives **on the cloud computer itself**:
+
+- **"Help and User Guide"** on its desktop — a full manual with
+  troubleshooting that works even without internet.
+- The **desktop wallpaper** shows where everything is, what software versions
+  are installed, and the three steps to follow when something breaks.
 
 ## If you cannot connect
 

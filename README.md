@@ -48,6 +48,8 @@ flowchart LR
 | Alerting | Email on auto-stop events + AWS Budget emails at 80%/100% of monthly budget (set `alert_email`) |
 | Claude | Git, Node.js LTS and the Claude Code CLI pre-installed — run `claude` on the VM |
 | Health checks | `./scripts/check.sh` locally + "Check System Health" on the VM desktop |
+| Self-healing | Every install re-verified at each boot; "Repair This Computer" button + `./scripts/repair.sh` reinstall anything broken; Tally's download URL is discovered live from their site |
+| On-VM help | "Help and User Guide" desktop page (works offline) + an info wallpaper showing locations, versions, and what to do when something breaks |
 
 ## Two audiences, two documents
 
@@ -127,6 +129,27 @@ account on first run).
 The public IP changes on every start — `start.sh` always prints the current one.
 Prefer a desktop client? Use **Microsoft Remote Desktop** (free on the Mac App
 Store) with the IP from `start.sh`.
+
+## Self-healing and updates (how it stays foolproof)
+
+External downloads move and fail — the design assumes it:
+
+- All VM logic and content lives in [`vm/`](vm/) and is uploaded by Terraform
+  to a **private S3 assets bucket in your account**. The VM re-syncs from it at
+  **every boot**, then runs `repair.ps1` — an idempotent installer that checks
+  each component by its real behavior (not just file presence) and reinstalls
+  only what's missing, with retries and fallbacks.
+- **Updating the fleet is just:** edit a file in `vm/` → `terraform apply`
+  (uploads the change) → `./scripts/repair.sh` (or the next boot) applies it.
+- The **TallyPrime installer URL is discovered live** from Tally's own site
+  JavaScript (newest release wins), with last-known-good mirrors as fallback —
+  a new Tally release can't break provisioning.
+- A **weekly CI job** (`linkcheck.yml`) probes every external URL the project
+  depends on and fails loudly when a vendor moves something — so the repo gets
+  fixed before a user ever sees a dead link. Run it locally any time:
+  `bash scripts/check-urls.sh`.
+- On the VM, the non-technical path is two desktop buttons: **Check System
+  Health** (PASS/FAIL for everything) → **Repair This Computer** (fixes it).
 
 ## Using your DSC (USB token) on the remote machine
 

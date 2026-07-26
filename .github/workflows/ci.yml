@@ -40,7 +40,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Analyze userdata.ps1 body
+      - name: Analyze userdata.ps1 body and vm/*.ps1
         shell: pwsh
         run: |
           Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
@@ -48,9 +48,11 @@ jobs:
           Get-Content userdata.ps1 |
             Where-Object { $_ -notmatch '^\s*</?(powershell|persist)' } |
             Set-Content userdata-body.ps1
-          $findings = Invoke-ScriptAnalyzer -Path userdata-body.ps1 -Severity Error
+          $targets = @('userdata-body.ps1') + (Get-ChildItem vm -Filter *.ps1 | ForEach-Object FullName)
+          $findings = @()
+          foreach ($t in $targets) { $findings += Invoke-ScriptAnalyzer -Path $t -Severity Error }
           if ($findings) { $findings | Format-Table -AutoSize; exit 1 }
-          Write-Host "No errors."
+          Write-Host "No errors in $($targets.Count) file(s)."
 
   security:
     name: tfsec (IaC security scan)
