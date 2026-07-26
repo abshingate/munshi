@@ -58,3 +58,5 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: aquasecurity/tfsec-action@v1.0.3
+        with:
+          github_token: ${{ github.token }}
