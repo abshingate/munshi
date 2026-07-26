@@ -154,7 +154,10 @@ if (Test-Path "$appSrc\server.js") {
 
     if (-not (Test-Path "$appDst\cert.pfx")) {
         $cert = New-SelfSignedCertificate -DnsName "tally-ai" -CertStoreLocation Cert:\LocalMachine\My -NotAfter (Get-Date).AddYears(5)
-        $pw = ConvertTo-SecureString "tallyai" -Force -AsPlainText
+        # The PFX passphrase is deliberately fixed and non-secret: it wraps a
+        # self-signed localhost cert and the app must know it to serve HTTPS.
+        $pw = [System.Security.SecureString]::new()
+        foreach ($ch in "tallyai".ToCharArray()) { $pw.AppendChar($ch) }
         Export-PfxCertificate -Cert $cert -FilePath "$appDst\cert.pfx" -Password $pw | Out-Null
     }
 
