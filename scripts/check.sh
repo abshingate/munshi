@@ -14,7 +14,6 @@ fail() { echo "${RED}FAIL${RST}  $1"; ISSUES=$((ISSUES+1)); }
 
 REGION=$(terraform output -raw region 2>/dev/null) || { fail "Terraform outputs missing — is it deployed? (terraform apply)"; exit 1; }
 ID=$(terraform output -raw instance_id)
-NAME=$(terraform output -raw instance_id >/dev/null 2>&1 && echo "tally-workstation")
 
 echo "== AWS infrastructure =="
 
@@ -67,12 +66,11 @@ else
   echo "== Connectivity (from this machine) =="
   IP=$(aws ec2 describe-instances --region "$REGION" --instance-ids "$ID" \
     --query 'Reservations[0].Instances[0].PublicIpAddress' --output text)
-  # nc's connect-timeout flag differs: -G on macOS, -w on Linux (CloudShell)
-  NCT="-w"; [[ "$(uname)" == "Darwin" ]] && NCT="-G"
   if [[ "$(uname)" == "Darwin" ]]; then
-    nc -z $NCT 5 "$IP" 8443 >/dev/null 2>&1 && pass "DCV browser port 8443 reachable (https://$IP:8443)" \
+    # -G is macOS nc's connect-timeout flag
+    nc -z -G 5 "$IP" 8443 >/dev/null 2>&1 && pass "DCV browser port 8443 reachable (https://$IP:8443)" \
       || fail "Port 8443 unreachable — has your home IP changed? Run scripts/fix-ip.sh"
-    nc -z $NCT 5 "$IP" 3389 >/dev/null 2>&1 && pass "RDP port 3389 reachable" \
+    nc -z -G 5 "$IP" 3389 >/dev/null 2>&1 && pass "RDP port 3389 reachable" \
       || fail "Port 3389 unreachable — has your home IP changed? Run scripts/fix-ip.sh"
   else
     # CloudShell runs inside AWS — its own IP is not in allowed_cidr, so an

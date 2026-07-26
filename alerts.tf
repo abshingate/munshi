@@ -5,6 +5,9 @@ locals {
   alerts_enabled = var.alert_email != ""
 }
 
+# Topic carries only "instance was auto-stopped" notifications — no sensitive
+# payloads, so KMS encryption would add key-management cost for nothing.
+#tfsec:ignore:aws-sns-enable-topic-encryption
 resource "aws_sns_topic" "alerts" {
   count = local.alerts_enabled ? 1 : 0
   name  = "${var.name}-alerts"

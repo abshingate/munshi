@@ -1,9 +1,37 @@
-# On-Demand Windows Accounting Workstation (Tally on AWS)
+# Tally Cloud Workstation
+
+[![CI](https://github.com/abshingate/tally-cloud-workstation/actions/workflows/ci.yml/badge.svg)](https://github.com/abshingate/tally-cloud-workstation/actions/workflows/ci.yml)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![Terraform](https://img.shields.io/badge/Terraform-%E2%89%A51.5-844FBA?logo=terraform&logoColor=white)](https://developer.hashicorp.com/terraform)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 A pay-only-when-you-use-it Windows machine on AWS for monthly accounting and
 compliance work (TallyPrime, GST/PF/PT/Income-tax portals). The machine stays
 **stopped** most of the month — you start it, work for a few hours, stop it —
 and all data persists forever and is snapshotted daily.
+
+```mermaid
+flowchart LR
+    subgraph you["You"]
+        B["Browser / RDP client"]
+        T["DSC USB token"]
+    end
+    subgraph aws["AWS ap-south-1 · your account"]
+        subgraph vpc["VPC 10.20.0.0/16"]
+            EC2["Windows Server 2022\nTallyPrime · Java 8 · Chrome\nAmazon DCV · Claude Code"]
+        end
+        SNAP["Nightly EBS snapshots\n(14 kept)"]
+        ALARM["Idle auto-stop alarm"]
+        SNS["Email alerts + budget"]
+        SSM["SSM / Fleet Manager"]
+    end
+    B -- "HTTPS 8443 (DCV) / RDP 3389\nonly from your IP" --> EC2
+    T -. "smart-card redirection\nor VirtualHere" .-> EC2
+    EC2 --> SNAP
+    ALARM -- "stop when idle" --> EC2
+    ALARM --> SNS
+    SSM -- "health checks & browser fallback" --> EC2
+```
 
 **Typical cost: ~$10–12/month (~₹900–1,000)** for ~8–10 hours of monthly use
 (mostly disk storage), versus $100+ for a machine running 24/7.
@@ -181,3 +209,19 @@ never contains anything account-specific or secret.
 | 100 GB gp3 disk (always) | ~$9/month |
 | Daily snapshots | < $1/month |
 | **Total** | **~$10–12/month** |
+
+## Contributing
+
+Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). Please
+read the design principles there first; the north star is that a
+**non-technical accountant** must be able to use the result. Security issues:
+see [SECURITY.md](SECURITY.md).
+
+## License
+
+Copyright 2026 Tally Cloud Workstation contributors.
+Licensed under the [Apache License 2.0](LICENSE).
+
+TallyPrime is a product of Tally Solutions Pvt. Ltd.; this project is not
+affiliated with or endorsed by Tally Solutions, AWS, or any government portal
+it references. You need your own TallyPrime license and AWS account.

@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  terraform:
+    name: Terraform fmt & validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.8"
+      - name: terraform fmt
+        run: terraform fmt -check -recursive -diff
+      - name: terraform init
+        run: terraform init -backend=false -input=false
+      - name: terraform validate
+        run: terraform validate -no-color
+
+  shellcheck:
+    name: ShellCheck (scripts)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ludeeus/action-shellcheck@2.0.0
+        with:
+          scandir: "./scripts"
+
+  powershell:
+    name: PSScriptAnalyzer (userdata)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Analyze userdata.ps1 body
+        shell: pwsh
+        run: |
+          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
+          # Strip the EC2 <powershell>/<persist> wrapper tags before analysis
+          Get-Content userdata.ps1 |
+            Where-Object { $_ -notmatch '^\s*</?(powershell|persist)' } |
+            Set-Content userdata-body.ps1
+          $findings = Invoke-ScriptAnalyzer -Path userdata-body.ps1 -Severity Error
+          if ($findings) { $findings | Format-Table -AutoSize; exit 1 }
+          Write-Host "No errors."
+
+  security:
+    name: tfsec (IaC security scan)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aquasecurity/tfsec-action@v1.0.3

@@ -1,0 +1,40 @@
+name: Bug report
+description: Something is broken or behaving unexpectedly
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! **Never paste secrets** — no AWS keys, no
+        `.pem` contents, no `terraform.tfstate`, and blur/replace your IP.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, what happened instead?
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part is affected?
+      options:
+        - Deployment (terraform / button 0 / CloudShell)
+        - Daily use (start / stop / connect / password)
+        - Health checks (check.sh / on-VM check)
+        - The Windows VM itself (software, Tally, DSC)
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: check-output
+    attributes:
+      label: Output of ./scripts/check.sh (if applicable)
+      description: Paste the output — it pinpoints most problems. Redact your IP.
+      render: text
+  - type: input
+    id: platform
+    attributes:
+      label: Local platform
+      placeholder: e.g. macOS 15 / AWS CloudShell / Windows 11

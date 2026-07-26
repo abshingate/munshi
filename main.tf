@@ -1,5 +1,8 @@
 # --- Networking: small self-contained VPC (works in any account, no NAT costs) ---
 
+# Flow logs are omitted deliberately: single-user workstation VPC; logging
+# every packet would add cost with no audience to read the logs.
+#tfsec:ignore:aws-ec2-require-vpc-flow-logs-for-all-vpcs
 resource "aws_vpc" "this" {
   cidr_block           = "10.20.0.0/16"
   enable_dns_support   = true
@@ -15,8 +18,11 @@ resource "aws_internet_gateway" "this" {
 }
 
 resource "aws_subnet" "public" {
-  vpc_id                  = aws_vpc.this.id
-  cidr_block              = "10.20.1.0/24"
+  vpc_id     = aws_vpc.this.id
+  cidr_block = "10.20.1.0/24"
+  # Public IP is the point: users connect directly over RDP/DCV; access is
+  # restricted to the owner's /32 by the security group.
+  #tfsec:ignore:aws-ec2-no-public-ip-subnet
   map_public_ip_on_launch = true
 
   tags = { Name = "${var.name}-public" }
@@ -92,6 +98,9 @@ resource "aws_security_group" "this" {
     cidr_blocks = [var.allowed_cidr]
   }
 
+  # Full egress is intentional: this is a user workstation that must reach
+  # Windows Update, Chocolatey, Tally servers and government portals.
+  #tfsec:ignore:aws-ec2-no-public-egress-sgr
   egress {
     description = "All outbound (Windows updates, Tally, GST/PF/PT portals)"
     from_port   = 0
@@ -146,12 +155,13 @@ resource "aws_iam_instance_profile" "this" {
 # --- The Windows workstation ---
 
 resource "aws_instance" "this" {
-  ami                         = nonsensitive(data.aws_ssm_parameter.windows_ami.value)
-  instance_type               = var.instance_type
-  subnet_id                   = aws_subnet.public.id
-  vpc_security_group_ids      = [aws_security_group.this.id]
-  key_name                    = aws_key_pair.this.key_name
-  iam_instance_profile        = aws_iam_instance_profile.this.name
+  ami                    = nonsensitive(data.aws_ssm_parameter.windows_ami.value)
+  instance_type          = var.instance_type
+  subnet_id              = aws_subnet.public.id
+  vpc_security_group_ids = [aws_security_group.this.id]
+  key_name               = aws_key_pair.this.key_name
+  iam_instance_profile   = aws_iam_instance_profile.this.name
+  #tfsec:ignore:aws-ec2-associate-public-ip-address
   associate_public_ip_address = true
   disable_api_termination     = true
   user_data                   = file("${path.module}/userdata.ps1")
