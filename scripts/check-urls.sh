@@ -23,6 +23,8 @@ check "https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-server-x64-Release.msi"
 check "https://tallysolutions.com/utility/js/DownloadUtility-india.js"
 check "https://tallymirror.tallysolutions.com/download_centre/Rel7.1/TP/Full/setup.exe"
 check "https://tallymirror.tallysolutions.com/download_centre/Rel7.1/TPEL/Full/setup.exe"
+# Google Drive for Desktop (file sharing with the VM)
+check "https://dl.google.com/drive-file-stream/GoogleDriveSetup.exe"
 # VirtualHere client (DSC over USB-over-IP)
 check "https://www.virtualhere.com/sites/default/files/usbclient/vhui64.exe"
 # Claude Code npm package

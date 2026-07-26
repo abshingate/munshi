@@ -211,6 +211,13 @@ No. It turns itself off after ~1 hour of inactivity and emails you. There is
 also a monthly budget alarm: if spending ever heads past about Rs. 2,000, you
 get a warning email long before it becomes a problem.
 
+**How do I get files onto / off the cloud computer?**
+Google Drive is installed on it. Sign in once (Google Drive icon on the
+cloud computer's desktop) and your Drive appears there as a normal folder —
+anything you put in Drive from your phone or laptop shows up on the cloud
+computer, and vice versa. Perfect for bills, statements, or backups from
+your CA.
+
 **I deleted something in Tally by mistake!**
 A backup of the whole computer is taken every night at 2 AM (the last 14 nights
 are kept). Whoever manages this for you can bring back yesterday's copy.

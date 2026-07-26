@@ -161,6 +161,19 @@ if (Test-Path $akSrc) {
     }
 } else { Report "FAILED" "SSH authorized key (missing from assets bucket)" }
 
+# --- Google Drive for Desktop (file sharing between machines and the VM) -----
+$gdInstalled = @(Get-ChildItem "C:\Program Files\Google\Drive File Stream" -Recurse -Filter "GoogleDriveFS.exe" -ErrorAction SilentlyContinue).Count -gt 0
+if ($gdInstalled) { Report "OK" "Google Drive" }
+else {
+    $gdSetup = "C:\Installers\GoogleDriveSetup.exe"
+    if (Get-File @("https://dl.google.com/drive-file-stream/GoogleDriveSetup.exe") $gdSetup 50MB) {
+        Start-Process $gdSetup -Wait -ArgumentList "--silent --desktop_shortcut"
+        $gdInstalled = @(Get-ChildItem "C:\Program Files\Google\Drive File Stream" -Recurse -Filter "GoogleDriveFS.exe" -ErrorAction SilentlyContinue).Count -gt 0
+        if ($gdInstalled) { Report "FIXED" "Google Drive (sign in once from the desktop icon)" }
+        else { Report "FAILED" "Google Drive install did not complete" }
+    } else { Report "FAILED" "Google Drive download" }
+}
+
 # --- VirtualHere client (DSC token over USB-over-IP) --------------------------
 $vh = "C:\Users\Public\Desktop\DSC Setup\VirtualHere Client.exe"
 if (Test-Path $vh) { Report "OK" "VirtualHere client" }

@@ -4,6 +4,15 @@ All notable changes to this project are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versioning: [SemVer](https://semver.org/).
 
+## [1.7.0] - 2026-07-26
+
+### Added
+
+- **Google Drive for Desktop** as a self-healed component (silent install
+  from Google's stable URL, health-checked, link-checked) — easy file
+  sharing between the VM and the user's other devices; sign-in is a
+  one-time manual step.
+
 ## [1.6.0] - 2026-07-26
 
 ### Added

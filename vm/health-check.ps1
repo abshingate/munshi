@@ -12,6 +12,7 @@ Check "Bootstrap completed"        { Test-Path "C:\bootstrap-complete.txt" } "st
 Check "Amazon DCV service running" { (Get-Service dcvserver -ErrorAction SilentlyContinue).Status -eq "Running" } "Restart-Service dcvserver, or $fix"
 Check "DCV listening on 8443"      { (Test-NetConnection localhost -Port 8443 -WarningAction SilentlyContinue).TcpTestSucceeded } "Restart-Service dcvserver"
 Check "Chrome installed"           { Test-Path "C:\Program Files\Google\Chrome\Application\chrome.exe" } $fix
+Check "Google Drive installed"     { @(Get-ChildItem "C:\Program Files\Google\Drive File Stream" -Recurse -Filter "GoogleDriveFS.exe" -ErrorAction SilentlyContinue).Count -gt 0 } $fix
 Check "Java 64-bit installed"      { Test-Path "C:\Program Files\Java" } $fix
 Check "Java 32-bit installed"      { Test-Path "C:\Program Files (x86)\Java" } $fix
 Check "Claude Code installed"      { (& "C:\Program Files\nodejs\claude.cmd" --version 2>$null) -match "Claude" } $fix
