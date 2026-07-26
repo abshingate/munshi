@@ -52,8 +52,11 @@ data "aws_caller_identity" "current" {}
 
 # Versioning/logging omitted: contents are generated from this repo (git is
 # the version history) and re-uploaded by terraform on every change.
+# SSE-S3 (AES256) is sufficient: contents are this public repo's scripts —
+# a customer-managed KMS key would add cost and key-management for no benefit.
 #tfsec:ignore:aws-s3-enable-versioning
 #tfsec:ignore:aws-s3-enable-bucket-logging
+#tfsec:ignore:aws-s3-encryption-customer-key
 resource "aws_s3_bucket" "assets" {
   bucket = "${var.name}-assets-${data.aws_caller_identity.current.account_id}"
 }
@@ -66,6 +69,7 @@ resource "aws_s3_bucket_public_access_block" "assets" {
   restrict_public_buckets = true
 }
 
+#tfsec:ignore:aws-s3-encryption-customer-key
 resource "aws_s3_bucket_server_side_encryption_configuration" "assets" {
   bucket = aws_s3_bucket.assets.id
   rule {
@@ -186,7 +190,10 @@ resource "aws_iam_role_policy" "dcv_license" {
   })
 }
 
-# Read access to the assets bucket (VM pulls its scripts from there)
+# Read access to the assets bucket (VM pulls its scripts from there).
+# The /* wildcard is the intent: the instance must read every asset file,
+# and the bucket contains nothing else.
+#tfsec:ignore:aws-iam-no-policy-wildcards
 resource "aws_iam_role_policy" "assets" {
   name = "vm-assets"
   role = aws_iam_role.instance.id
