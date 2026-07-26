@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Munshi — AI Accountant</title>
+<style>
+  :root { --navy:#18263a; --gold:#f0b232; --bg:#f2f4f8; --ink:#1c2733; --me:#18263a; --bot:#ffffff; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { height:100%; margin:0; }
+  body { font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif; background:var(--bg); color:var(--ink);
+         display:flex; flex-direction:column; height:100dvh; }
+  header { background:var(--navy); color:#fff; padding:calc(env(safe-area-inset-top) + 10px) 14px 10px;
+           display:flex; align-items:center; gap:10px; flex-shrink:0; }
+  header .logo { width:34px; height:34px; border-radius:50%; background:var(--gold); color:var(--navy);
+                 display:flex; align-items:center; justify-content:center; font-weight:800; font-size:17px; }
+  header .t { flex:1; min-width:0; }
+  header .t b { display:block; font-size:16px; }
+  header .t small { opacity:.75; font-size:11px; display:flex; align-items:center; gap:5px; }
+  .dot { width:8px; height:8px; border-radius:50%; background:#e05d4b; display:inline-block; }
+  .dot.on { background:#39c46d; }
+  header button { background:rgba(255,255,255,.12); color:#fff; border:0; border-radius:8px;
+                  padding:7px 10px; font-size:12px; }
+  main { flex:1; overflow-y:auto; padding:14px 12px 8px; -webkit-overflow-scrolling:touch; }
+  .msg { max-width:86%; margin:0 0 10px; padding:10px 13px; border-radius:16px; font-size:15px;
+         line-height:1.45; white-space:pre-wrap; word-wrap:break-word; }
+  .msg.me { background:var(--me); color:#fff; margin-left:auto; border-bottom-right-radius:4px; }
+  .msg.bot { background:var(--bot); border:1px solid #e2e7ee; border-bottom-left-radius:4px; }
+  .msg.bot b { color:var(--navy); }
+  .msg .att { font-size:12px; opacity:.8; font-style:italic; }
+  .step { font-size:11.5px; color:#7a8798; margin:-4px 0 10px 6px; }
+  .think { display:flex; gap:5px; padding:12px 6px; }
+  .think span { width:8px; height:8px; border-radius:50%; background:#b9c3cf; animation:blink 1.2s infinite; }
+  .think span:nth-child(2){animation-delay:.2s} .think span:nth-child(3){animation-delay:.4s}
+  @keyframes blink { 0%,80%,100%{opacity:.25} 40%{opacity:1} }
+  footer { flex-shrink:0; background:#fff; border-top:1px solid #e2e7ee;
+           padding:8px 10px calc(env(safe-area-inset-bottom) + 8px); display:flex; gap:8px; align-items:flex-end; }
+  footer .cam { width:42px; height:42px; border-radius:12px; border:1px solid #d6dde6; background:#f6f8fb;
+                font-size:20px; flex-shrink:0; }
+  footer textarea { flex:1; border:1px solid #d6dde6; border-radius:12px; padding:10px 12px; font-size:16px;
+                    font-family:inherit; resize:none; max-height:110px; outline:none; }
+  footer .send { width:42px; height:42px; border-radius:12px; border:0; background:var(--navy); color:#fff;
+                 font-size:18px; flex-shrink:0; }
+  footer .send:disabled { opacity:.4; }
+  .chips { padding:0 12px 6px; display:flex; gap:6px; flex-wrap:wrap; }
+  .chip { background:#fff; border:1px solid #d6dde6; border-radius:14px; padding:5px 10px; font-size:12px; color:#415062; }
+  /* Full-screen panels (setup / login) */
+  .panel { position:fixed; inset:0; background:var(--bg); display:flex; flex-direction:column;
+           align-items:center; justify-content:center; padding:26px; z-index:10; }
+  .panel .card { background:#fff; border:1px solid #e2e7ee; border-radius:16px; padding:24px 20px; width:100%;
+                 max-width:420px; }
+  .panel h1 { margin:0 0 6px; font-size:20px; color:var(--navy); }
+  .panel p { margin:0 0 16px; font-size:13.5px; color:#5d6b7c; line-height:1.5; }
+  .panel label { display:block; font-size:12px; font-weight:600; color:#415062; margin:12px 0 4px; }
+  .panel input { width:100%; border:1px solid #d6dde6; border-radius:10px; padding:11px 12px; font-size:16px; }
+  .panel button { width:100%; margin-top:18px; background:var(--navy); color:#fff; border:0; border-radius:10px;
+                  padding:13px; font-size:15px; font-weight:600; }
+  .panel .err { color:#c0392b; font-size:13px; margin-top:10px; min-height:16px; }
+  .preview { display:flex; gap:6px; padding:0 12px 6px; }
+  .preview img { height:52px; border-radius:8px; border:1px solid #d6dde6; }
+  .hidden { display:none !important; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">म</div>
+  <div class="t">
+    <b>Munshi — AI Accountant</b>
+    <small><span class="dot" id="tallyDot"></span><span id="statusText">connecting…</span></small>
+  </div>
+  <button id="menuBtn">⋯</button>
+</header>
+
+<main id="chat"></main>
+<div class="preview hidden" id="preview"></div>
+<div class="chips" id="chips">
+  <span class="chip" data-q="What did I spend this month?">Spending this month</span>
+  <span class="chip" data-q="Show me today's entries">Today's entries</span>
+  <span class="chip" data-q="What are my cash and bank balances?">Cash &amp; bank balance</span>
+</div>
+
+<footer>
+  <button class="cam" id="camBtn" title="Attach a bill photo">📷</button>
+  <input type="file" id="fileInput" accept="image/*" capture="environment" multiple class="hidden">
+  <textarea id="input" rows="1" placeholder="Type, or send a bill photo…"></textarea>
+  <button class="send" id="sendBtn">➤</button>
+</footer>
+
+<!-- Setup panel (first run) -->
+<div class="panel hidden" id="setupPanel">
+  <div class="card">
+    <h1>Set up your AI Accountant</h1>
+    <p>One-time setup. You need an Anthropic API key (console.anthropic.com → API keys) and a passcode you'll use to open this app.</p>
+    <label>Anthropic API key</label>
+    <input id="setupKey" placeholder="sk-ant-…" autocomplete="off">
+    <label>Choose a passcode</label>
+    <input id="setupPass" type="password" placeholder="At least 4 characters">
+    <button id="setupBtn">Start</button>
+    <div class="err" id="setupErr"></div>
+  </div>
+</div>
+
+<!-- Login panel -->
+<div class="panel hidden" id="loginPanel">
+  <div class="card">
+    <h1>Welcome back</h1>
+    <p>Enter your passcode to open your AI accountant.</p>
+    <label>Passcode</label>
+    <input id="loginPass" type="password" autocomplete="current-password">
+    <button id="loginBtn">Open</button>
+    <div class="err" id="loginErr"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const chat = $("chat");
+  let pendingImages = [];
+
+  function el(tag, cls, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+  function addMsg(role, text, attachments) {
+    const m = el("div", "msg " + (role === "user" ? "me" : "bot"));
+    if (attachments) {
+      const a = el("div", "att", attachments === 1 ? "📎 1 photo attached" : `📎 ${attachments} photos attached`);
+      m.appendChild(a);
+    }
+    if (text) {
+      // minimal safe formatting: **bold** and bullet lines
+      const safe = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      const html = safe.replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
+      const span = el("span");
+      span.innerHTML = html;
+      m.appendChild(span);
+    }
+    chat.appendChild(m);
+    chat.scrollTop = chat.scrollHeight;
+    return m;
+  }
+  function addStep(text) {
+    chat.appendChild(el("div", "step", text));
+    chat.scrollTop = chat.scrollHeight;
+  }
+  function thinking(on) {
+    let t = $("thinkRow");
+    if (on && !t) {
+      t = el("div", "think"); t.id = "thinkRow";
+      t.append(el("span"), el("span"), el("span"));
+      chat.appendChild(t); chat.scrollTop = chat.scrollHeight;
+    } else if (!on && t) t.remove();
+  }
+
+  async function api(path, body, method) {
+    const res = await fetch(path, {
+      method: method || (body ? "POST" : "GET"),
+      headers: body ? { "Content-Type": "application/json" } : {},
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || res.statusText);
+    return data;
+  }
+
+  const STEP_LABELS = {
+    tally_status: "Checking Tally…", list_ledgers: "Reading your ledgers…",
+    get_daybook: "Reading your entries…", create_ledger: "Creating ledger in Tally…",
+    create_voucher: "Posting the entry in Tally…", refresh_knowledge: "Refreshing my knowledge…",
+  };
+
+  async function send() {
+    const text = $("input").value.trim();
+    if (!text && pendingImages.length === 0) return;
+    $("input").value = ""; autoSize();
+    const images = pendingImages; pendingImages = []; renderPreview();
+    addMsg("user", text, images.length || undefined);
+    $("sendBtn").disabled = true; thinking(true);
+    try {
+      const data = await api("/api/chat", { text, images });
+      thinking(false);
+      for (const s of data.steps || []) addStep(STEP_LABELS[s] || s);
+      addMsg("assistant", data.reply || "(no reply)");
+    } catch (err) {
+      thinking(false);
+      addMsg("assistant", "⚠️ " + err.message);
+    } finally {
+      $("sendBtn").disabled = false;
+      refreshStatus();
+    }
+  }
+
+  function renderPreview() {
+    const p = $("preview");
+    p.innerHTML = "";
+    if (pendingImages.length === 0) { p.classList.add("hidden"); return; }
+    p.classList.remove("hidden");
+    for (const img of pendingImages) {
+      const i = document.createElement("img");
+      i.src = `data:${img.media_type};base64,${img.data}`;
+      p.appendChild(i);
+    }
+  }
+
+  function fileToImage(file) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        // Downscale to max 1600px long edge to keep uploads fast
+        const scale = Math.min(1, 1600 / Math.max(img.width, img.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.88);
+        URL.revokeObjectURL(url);
+        resolve({ media_type: "image/jpeg", data: dataUrl.split(",")[1] });
+      };
+      img.onerror = reject;
+      img.src = url;
+    });
+  }
+
+  function autoSize() {
+    const t = $("input");
+    t.style.height = "auto";
+    t.style.height = Math.min(t.scrollHeight, 110) + "px";
+  }
+
+  async function refreshStatus() {
+    try {
+      const s = await api("/api/status");
+      if (!s.configured) { show("setup"); return; }
+      if (!s.authed) { show("login"); return; }
+      show("chat");
+      $("tallyDot").className = "dot" + (s.tallyOnline ? " on" : "");
+      $("statusText").textContent = s.tallyOnline
+        ? `Tally connected · ${s.model}`
+        : "Tally offline — open Tally on the computer";
+    } catch {
+      $("statusText").textContent = "server unreachable";
+    }
+  }
+
+  function show(which) {
+    $("setupPanel").classList.toggle("hidden", which !== "setup");
+    $("loginPanel").classList.toggle("hidden", which !== "login");
+    if (which === "chat" && !chat.dataset.loaded) {
+      chat.dataset.loaded = "1";
+      loadHistory();
+    }
+  }
+
+  async function loadHistory() {
+    try {
+      const h = await api("/api/history");
+      if (h.messages.length === 0) {
+        addMsg("assistant", "Namaste! 🙏 I'm Munshi, your AI accountant.\n\nSend me a photo of a bill, or just tell me things like:\n• \"Paid ₹5,000 shop rent in cash yesterday\"\n• \"How much did we sell this month?\"\n\nI'll propose the entry, and only after you say yes will I record it in Tally.");
+      } else {
+        for (const m of h.messages) addMsg(m.role, m.text, m.images || undefined);
+      }
+    } catch {}
+  }
+
+  // --- events ---
+  $("sendBtn").addEventListener("click", send);
+  $("input").addEventListener("input", autoSize);
+  $("input").addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey && window.innerWidth > 700) { e.preventDefault(); send(); }
+  });
+  $("camBtn").addEventListener("click", () => $("fileInput").click());
+  $("fileInput").addEventListener("change", async (e) => {
+    for (const f of e.target.files) {
+      try { pendingImages.push(await fileToImage(f)); } catch {}
+    }
+    e.target.value = "";
+    renderPreview();
+  });
+  $("chips").addEventListener("click", (e) => {
+    const q = e.target.dataset && e.target.dataset.q;
+    if (q) { $("input").value = q; send(); }
+  });
+  $("menuBtn").addEventListener("click", async () => {
+    const choice = prompt("Type: refresh (re-read Tally), reset (clear chat)");
+    if (choice === "refresh") { await api("/api/refresh", {}); addStep("Knowledge refreshed from Tally"); refreshStatus(); }
+    if (choice === "reset" && confirm("Clear the whole conversation?")) { await api("/api/reset", {}); location.reload(); }
+  });
+  $("setupBtn").addEventListener("click", async () => {
+    try {
+      $("setupErr").textContent = "";
+      await api("/api/setup", { apiKey: $("setupKey").value.trim(), passcode: $("setupPass").value });
+      location.reload();
+    } catch (err) { $("setupErr").textContent = err.message; }
+  });
+  $("loginBtn").addEventListener("click", async () => {
+    try {
+      $("loginErr").textContent = "";
+      await api("/api/login", { passcode: $("loginPass").value });
+      location.reload();
+    } catch (err) { $("loginErr").textContent = err.message; }
+  });
+  $("loginPass").addEventListener("keydown", (e) => { if (e.key === "Enter") $("loginBtn").click(); });
+
+  refreshStatus();
+  setInterval(refreshStatus, 60000);
+})();
+</script>
+</body>
+</html>

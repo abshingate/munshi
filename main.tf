@@ -143,6 +143,14 @@ resource "aws_security_group" "this" {
   }
 
   ingress {
+    description = "AI Accountant web app (mobile-first chat, HTTPS)"
+    from_port   = 8444
+    to_port     = 8444
+    protocol    = "tcp"
+    cidr_blocks = [var.allowed_cidr]
+  }
+
+  ingress {
     description = "SSH (reverse tunnel that carries the DSC token via VirtualHere)"
     from_port   = 22
     to_port     = 22

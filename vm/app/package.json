@@ -1,0 +1,10 @@
+{
+  "name": "tally-ai-accountant",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AI accountant chat app for the Tally Cloud Workstation",
+  "main": "server.js",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.110.0"
+  }
+}

@@ -16,6 +16,7 @@ Check "Java 64-bit installed"      { Test-Path "C:\Program Files\Java" } $fix
 Check "Java 32-bit installed"      { Test-Path "C:\Program Files (x86)\Java" } $fix
 Check "Claude Code installed"      { (& "C:\Program Files\nodejs\claude.cmd" --version 2>$null) -match "Claude" } $fix
 Check "Help page available"        { Test-Path "C:\HealthCheck\vm\help.html" } $fix
+Check "AI Accountant app (8444)"   { (Test-NetConnection localhost -Port 8444 -WarningAction SilentlyContinue).TcpTestSucceeded } $fix
 Check "Info wallpaper rendered"    { Test-Path "C:\HealthCheck\wallpaper.bmp" } "run C:\HealthCheck\vm\wallpaper.ps1"
 Check "Self-repair task registered" { schtasks /Query /TN "TallyCloudRepair" 2>$null } "re-run C:\HealthCheck\vm\bootstrap.ps1"
 Check "Tally data folder exists"   { Test-Path "C:\TallyData" } "mkdir C:\TallyData"

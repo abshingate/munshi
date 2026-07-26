@@ -145,6 +145,57 @@ elseif (Get-File @("https://www.virtualhere.com/sites/default/files/usbclient/vh
     Report "FIXED" "VirtualHere client"
 } else { Report "FAILED" "VirtualHere client (download from virtualhere.com when needed)" }
 
+# --- AI Accountant app (Node web app on https://<machine>:8444) --------------
+$appSrc = "C:\HealthCheck\vm\app"
+$appDst = "C:\TallyAI"
+if (Test-Path "$appSrc\server.js") {
+    New-Item -ItemType Directory -Force -Path $appDst, "$appDst\data" | Out-Null
+    robocopy $appSrc $appDst /E /XD data node_modules /NFL /NDL /NJH /NJS /NP | Out-Null
+
+    if (-not (Test-Path "$appDst\cert.pfx")) {
+        $cert = New-SelfSignedCertificate -DnsName "tally-ai" -CertStoreLocation Cert:\LocalMachine\My -NotAfter (Get-Date).AddYears(5)
+        $pw = ConvertTo-SecureString "tallyai" -Force -AsPlainText
+        Export-PfxCertificate -Cert $cert -FilePath "$appDst\cert.pfx" -Password $pw | Out-Null
+    }
+
+    if (-not (Test-Path "$appDst\node_modules\@anthropic-ai\sdk")) {
+        Push-Location $appDst
+        & "C:\Program Files\nodejs\npm.cmd" install --omit=dev --no-audit --no-fund *> $null
+        Pop-Location
+    }
+    $depsOk = Test-Path "$appDst\node_modules\@anthropic-ai\sdk"
+
+    if (-not (Get-NetFirewallRule -DisplayName "TallyAI" -ErrorAction SilentlyContinue)) {
+        New-NetFirewallRule -DisplayName "TallyAI" -Direction Inbound -Protocol TCP -LocalPort 8444 -Action Allow | Out-Null
+    }
+    schtasks /Create /TN "TallyAIApp" /SC ONSTART /RU SYSTEM /RL HIGHEST /F `
+        /TR "\`"C:\Program Files\nodejs\node.exe\`" C:\TallyAI\server.js" | Out-Null
+
+    # Restart only when the code changed or the app isn't running, so a routine
+    # repair never drops an in-flight chat.
+    $hashSrc = (Get-ChildItem "$appDst\server.js", "$appDst\package.json", "$appDst\lib\*.js", "$appDst\public\*.html" |
+        Get-FileHash -Algorithm SHA256 | ForEach-Object Hash) -join ""
+    $verFile = "$appDst\data\app-version.txt"
+    $prev = ""; if (Test-Path $verFile) { $prev = Get-Content $verFile -Raw }
+    $listening = (Test-NetConnection localhost -Port 8444 -WarningAction SilentlyContinue).TcpTestSucceeded
+    if ($depsOk -and ((-not $listening) -or ($hashSrc.Trim() -ne $prev.Trim()))) {
+        schtasks /End /TN "TallyAIApp" 2>$null | Out-Null
+        Start-Sleep -Seconds 2
+        schtasks /Run /TN "TallyAIApp" | Out-Null
+        Start-Sleep -Seconds 4
+        $hashSrc | Out-File $verFile -Encoding ascii
+        $listening = (Test-NetConnection localhost -Port 8444 -WarningAction SilentlyContinue).TcpTestSucceeded
+        if ($listening) { Report "FIXED" "AI Accountant app (port 8444)" }
+        else { Report "FAILED" "AI Accountant app not listening on 8444 (schtasks /Run TallyAIApp; node C:\TallyAI\server.js for logs)" }
+    } elseif ($depsOk -and $listening) {
+        Report "OK" "AI Accountant app (port 8444)"
+    } else {
+        Report "FAILED" "AI Accountant dependencies (npm install @anthropic-ai/sdk failed)"
+    }
+} else {
+    Report "FAILED" "AI Accountant app files missing from assets sync"
+}
+
 Write-Output ""
 if ($script:fails -gt 0) {
     Write-Output "REPAIR RESULT: $($script:fails) component(s) still broken - will retry at next boot, or double-click Repair This Computer after checking the internet connection."

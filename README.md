@@ -50,6 +50,7 @@ flowchart LR
 | Health checks | `./scripts/check.sh` locally + "Check System Health" on the VM desktop |
 | Self-healing | Every install re-verified at each boot; "Repair This Computer" button + `./scripts/repair.sh` reinstall anything broken; Tally's download URL is discovered live from their site |
 | On-VM help | "Help and User Guide" desktop page (works offline) + an info wallpaper showing locations, versions, and what to do when something breaks |
+| AI Accountant | "Munshi" — a Claude-powered accountant chat app on the VM (`https://<ip>:8444`, mobile-first): send bill photos, ask questions, and it reads/posts Tally entries with confirm-before-write discipline |
 
 ## Three audiences, three documents
 
@@ -131,6 +132,38 @@ account on first run).
 The public IP changes on every start — `start.sh` always prints the current one.
 Prefer a desktop client? Use **Microsoft Remote Desktop** (free on the Mac App
 Store) with the IP from `start.sh`.
+
+## The AI Accountant ("Munshi")
+
+A Node.js web app (`vm/app/`) served from the VM on **`https://<ip>:8444`** —
+open it on any phone/laptop on your home network (same IP the firewall already
+allows) or via the "AI Accountant" desktop shortcut on the VM.
+
+- **What it does**: chat with an AI accountant that is connected to TallyPrime
+  through Tally's XML gateway (localhost:9000). It reads your ledgers and day
+  book, answers questions ("what did I spend this month?"), extracts bill
+  photos (vision), proposes the correct double-entry voucher in plain
+  language, and — **only after you confirm** — posts it to Tally, creating any
+  needed ledgers under the right groups.
+- **Engine**: Claude (`claude-opus-5`) via the official Anthropic SDK, with
+  server-side refusal fallbacks enabled, prompt caching on the persona +
+  books-snapshot system blocks, and a bounded agentic tool-use loop
+  (`tally_status`, `list_ledgers`, `get_daybook`, `create_ledger`,
+  `create_voucher`, `refresh_knowledge`). The provider layer is pluggable
+  (`vm/app/lib/llm.js`) — other LLMs can be added behind the same interface.
+- **Setup (one time)**: open the app → enter your Anthropic API key
+  (console.anthropic.com) and choose a passcode. In Tally, enable the gateway:
+  press F1 → Settings → Connectivity → "TallyPrime acts as" → **Both** (port
+  9000). The app's header shows Tally connected/offline live.
+- **Safety**: passcode + HttpOnly session cookie over HTTPS; config and chat
+  history live only on the VM (`C:\TallyAI\data`); the golden rule baked into
+  the system prompt is that nothing is ever written to Tally without an
+  explicit user confirmation in the conversation, and vouchers are validated
+  (debits = credits) server-side before posting.
+- **Operations**: deployed like everything else — synced from the assets
+  bucket, converged by `repair.ps1` (npm install, self-signed cert, firewall
+  rule, `TallyAIApp` scheduled task), restarted automatically only when its
+  code changes, health-checked on port 8444.
 
 ## Self-healing and updates (how it stays foolproof)
 

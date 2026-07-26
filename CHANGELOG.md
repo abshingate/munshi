@@ -4,6 +4,21 @@ All notable changes to this project are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versioning: [SemVer](https://semver.org/).
 
+## [1.3.0] - 2026-07-26
+
+### Added
+
+- **AI Accountant ("Munshi")** — a Claude-powered, mobile-first chat app
+  served from the VM at `https://<ip>:8444`. Reads ledgers/day book through
+  TallyPrime's XML gateway, understands bill photos (vision), proposes
+  entries in plain language, and posts vouchers/ledgers to Tally only after
+  explicit user confirmation (debit=credit validated server-side). Pluggable
+  LLM provider layer (Anthropic first: `claude-opus-5`, official SDK,
+  server-side refusal fallbacks, prompt caching). Deployed via the assets
+  bucket, converged by `repair.ps1` (npm deps, self-signed cert, firewall,
+  scheduled task), health-checked on port 8444; config + history stay in
+  `C:\TallyAI\data` across updates.
+
 ## [1.2.0] - 2026-07-26
 
 ### Added

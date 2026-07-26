@@ -100,6 +100,37 @@ desktop. Always keep your Tally company data in the **C:\TallyData** folder.
 (If you forget — don't worry. The computer switches itself off after about an
 hour of sitting idle, and emails you that it did.)
 
+## Your AI accountant — "Munshi"
+
+The cloud computer has a built-in AI accountant you can chat with **from your
+phone** — like WhatsApp-ing your accountant, except it answers instantly and
+records entries in Tally for you.
+
+**Opening it:** on your phone (on your home Wi-Fi), open the same address you
+use for the computer but ending in **:8444** — for example
+`https://3.111.198.54:8444` (the number part changes each time the machine is
+turned on; button `1` shows the current one). Accept the browser warning, same
+as always. On the cloud computer itself there's an "AI Accountant" icon.
+
+**First time:** it asks for two things — an *Anthropic API key* (whoever set
+this up can get one at console.anthropic.com) and a *passcode* you choose.
+Also, in Tally press **F1 → Settings → Connectivity** and set "TallyPrime acts
+as" to **Both** — that lets the AI talk to Tally. One time only.
+
+**Then just talk to it:**
+
+- 📷 Tap the camera, photograph a bill, hit send — it reads the bill, tells
+  you the entry it wants to make, and records it in Tally **only after you
+  say yes**.
+- "Paid ₹5,000 shop rent in cash yesterday" — same thing: it proposes, you
+  confirm, it records.
+- "How much did we sell this month?" / "What's my cash balance?" — it reads
+  your Tally books and answers.
+
+It never records anything without asking you first, and Tally must be open on
+the cloud computer for it to work (the app's header shows "Tally connected"
+in green when everything is ready).
+
 ## Signing with your DSC (the USB pen-drive-like token)
 
 Your DSC stays plugged into **your own computer at home** — not the cloud one.
