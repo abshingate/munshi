@@ -4,6 +4,16 @@ All notable changes to this project are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versioning: [SemVer](https://semver.org/).
 
+## [1.9.1] - 2026-07-26
+
+### Fixed
+
+- Two Tally-client bugs surfaced by first contact with real books: nested
+  NAME.LIST tags corrupted master names, and ranged report exports ignore
+  SVFROMDATE/SVTODATE over the gateway — voucher reads now use a
+  current-period Voucher collection with in-code date filtering (and a
+  period hint when the requested range lies outside Tally's Alt+F2 period).
+
 ## [1.9.0] - 2026-07-26
 
 ### Added

@@ -17,22 +17,28 @@ function unesc(s) {
     .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
 }
 
-async function post(xml) {
+async function post(xml, timeoutMs = 30000) {
   const res = await fetch(TALLY_URL, {
     method: "POST",
     headers: { "Content-Type": "text/xml" },
     body: xml,
-    signal: AbortSignal.timeout(30000),
+    signal: AbortSignal.timeout(timeoutMs),
   });
   return await res.text();
 }
 
-// Extract every occurrence of <TAG ...>value</TAG> (non-nested values)
+// Extract every occurrence of <TAG ...>value</TAG> (non-nested values).
+// The lookahead stops <NAME> from also matching <NAME.LIST> etc. — real
+// Tally data nests LANGUAGENAME.LIST/NAME.LIST inside masters.
 function tagValues(xml, tag) {
-  const re = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, "gi");
+  const re = new RegExp(`<${tag}(?![\\w.])[^>]*>([\\s\\S]*?)</${tag}>`, "gi");
   const out = [];
   let m;
-  while ((m = re.exec(xml)) !== null) out.push(unesc(m[1].trim()));
+  while ((m = re.exec(xml)) !== null) {
+    const v = unesc(m[1].trim());
+    if (!v.includes("<")) out.push(v); // skip captures that swallowed nested tags
+    else out.push(unesc(v.replace(/<[^>]*>/g, " ").trim()));
+  }
   return out;
 }
 // Split into blocks by a repeating element, e.g. VOUCHER or LEDGER
@@ -72,13 +78,18 @@ async function listLedgers() {
 
 // dates: YYYYMMDD strings. opts.includeRaw keeps the full voucher XML block
 // (needed for the reconciliation bank-date alteration round-trip).
+// Implementation note (learned against real data): Tally's ranged report
+// exports ignore SVFROMDATE/SVTODATE over the gateway, but a Voucher
+// collection reliably returns the company's CURRENT PERIOD — so we fetch the
+// period's vouchers and filter dates in code. Requested dates outside the
+// period set in Tally (Alt+F2) return nothing; surfaced via periodNote.
 async function dayBook(fromDate, toDate, company, opts = {}) {
   const comp = company ? `<SVCURRENTCOMPANY>${esc(company)}</SVCURRENTCOMPANY>` : "";
   const xml = await post(
-    `<ENVELOPE><HEADER><VERSION>1</VERSION><TALLYREQUEST>Export</TALLYREQUEST><TYPE>Data</TYPE><ID>Day Book</ID></HEADER><BODY><DESC><STATICVARIABLES><SVEXPORTFORMAT>$$SysName:XML</SVEXPORTFORMAT><SVFROMDATE>${esc(fromDate)}</SVFROMDATE><SVTODATE>${esc(toDate)}</SVTODATE>${comp}</STATICVARIABLES></DESC></BODY></ENVELOPE>`
+    `<ENVELOPE><HEADER><VERSION>1</VERSION><TALLYREQUEST>Export</TALLYREQUEST><TYPE>Collection</TYPE><ID>AIVch</ID></HEADER><BODY><DESC><STATICVARIABLES><SVEXPORTFORMAT>$$SysName:XML</SVEXPORTFORMAT>${comp}</STATICVARIABLES><TDL><TDLMESSAGE><COLLECTION NAME="AIVch" ISMODIFY="No"><TYPE>Voucher</TYPE><FETCH>DATE,VOUCHERTYPENAME,VOUCHERNUMBER,PARTYLEDGERNAME,NARRATION,ALLLEDGERENTRIES.LIST</FETCH></COLLECTION></TDLMESSAGE></TDL></DESC></BODY></ENVELOPE>`,
+    120000
   );
-  const cap = opts.limit || 200;
-  const vouchers = blocks(xml, "VOUCHER").slice(0, cap).map((b) => {
+  const all = blocks(xml, "VOUCHER").map((b) => {
     const remoteM = b.match(/<VOUCHER[^>]*REMOTEID="([^"]*)"/i);
     return {
       date: tagValues(b, "DATE")[0] || "",
@@ -94,7 +105,18 @@ async function dayBook(fromDate, toDate, company, opts = {}) {
       ...(opts.includeRaw ? { raw: b } : {}),
     };
   });
-  return { count: vouchers.length, truncated: blocks(xml, "VOUCHER").length > cap, vouchers };
+  const dates = all.map((v) => v.date).filter(Boolean).sort();
+  const inRange = all.filter((v) => v.date >= fromDate && v.date <= toDate);
+  const cap = opts.limit || 200;
+  const out = {
+    count: Math.min(inRange.length, cap),
+    truncated: inRange.length > cap,
+    vouchers: inRange.slice(0, cap),
+  };
+  if (inRange.length === 0 && all.length > 0) {
+    out.periodNote = `No vouchers in ${fromDate}-${toDate}. Tally's current period covers ${dates[0]}-${dates[dates.length - 1]} (${all.length} vouchers) — change the period in Tally (Alt+F2) to query other dates.`;
+  }
+  return out;
 }
 
 // ADR-0016: the ONLY permitted alteration — set the bank date (reconciliation
