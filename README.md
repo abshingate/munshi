@@ -155,11 +155,22 @@ allows) or via the "AI Accountant" desktop shortcut on the VM.
   (console.anthropic.com) and choose a passcode. In Tally, enable the gateway:
   press F1 → Settings → Connectivity → "TallyPrime acts as" → **Both** (port
   9000). The app's header shows Tally connected/offline live.
-- **Safety**: passcode + HttpOnly session cookie over HTTPS; config and chat
-  history live only on the VM (`C:\TallyAI\data`); the golden rule baked into
-  the system prompt is that nothing is ever written to Tally without an
-  explicit user confirmation in the conversation, and vouchers are validated
-  (debits = credits) server-side before posting.
+- **Safety — enforced in code, not just prompt**: the model can only create
+  **drafts** (`propose_entry`); posting happens exclusively when the user taps
+  the Confirm button on the draft card. Posting is **idempotent** (a draft
+  posts at most once; a marker check even survives a lost response),
+  ledgers are verified/created first, debits=credits and date sanity are
+  validated server-side, entries ≥ ₹1 lakh require typing the amount, and
+  every posted voucher is **verified by reading it back** from the day book.
+  Every action lands in an append-only audit log (`C:\TallyAI\data\audit.log`).
+  Passcode + HttpOnly session cookie over HTTPS; config and history stay on
+  the VM.
+- **Document filing**: Tally can't store attachments, so bill photos are filed
+  automatically on confirmation under
+  `C:\TallyData\Documents\FY<yy-yy>\<MM-Month>\<date>_<label>_M-<id>.jpg`
+  (covered by the nightly snapshots), and each voucher's narration carries its
+  `[M-<id>]` code plus the document path — voucher→bill and bill→voucher are
+  always traceable.
 - **Operations**: deployed like everything else — synced from the assets
   bucket, converged by `repair.ps1` (npm install, self-signed cert, firewall
   rule, `TallyAIApp` scheduled task), restarted automatically only when its

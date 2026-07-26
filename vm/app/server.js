@@ -80,6 +80,15 @@ function trimHistory(messages) {
   return messages;
 }
 
+// Shape sent to the UI for a draft card (no image data, no internals)
+function draftView(d) {
+  return {
+    id: d.id, status: d.status, createdAt: d.createdAt,
+    voucher: d.voucher, newLedgers: d.newLedgers, total: d.total,
+    bigAmount: d.bigAmount, verified: d.verified, docCount: (d.pendingDocs || []).length || (d.docPaths || []).length,
+  };
+}
+
 // --- request handling -------------------------------------------------------
 async function handle(req, res) {
   const url = new URL(req.url, "https://localhost");
@@ -153,6 +162,7 @@ async function handle(req, res) {
 
       const { runAgent, buildKnowledge, loadKnowledge } = require("./lib/agent");
       const { getProvider } = require("./lib/llm");
+      const draftStore = require("./lib/drafts");
 
       busy = true;
       try {
@@ -160,11 +170,50 @@ async function handle(req, res) {
         chats.messages.push({ role: "user", content: blocks });
         chats.messages = trimHistory(chats.messages);
         const provider = getProvider(config);
-        const { reply, steps } = await runAgent({ provider, config, messages: chats.messages });
+        // Drafts created during this turn get the bill images from this
+        // message attached, so confirming files them as documents.
+        const newDrafts = [];
+        const context = {
+          createDraft(spec) {
+            const d = draftStore.createDraft({ ...spec, images: body.images || [] });
+            newDrafts.push(d);
+            return d;
+          },
+        };
+        const { reply, steps } = await runAgent({ provider, config, messages: chats.messages, context });
         saveChats(chats);
-        return json(res, 200, { reply, steps });
+        return json(res, 200, { reply, steps, drafts: newDrafts.map(draftView) });
       } finally {
         busy = false;
+      }
+    }
+
+    if (req.method === "GET" && url.pathname === "/api/drafts") {
+      const draftStore = require("./lib/drafts");
+      return json(res, 200, { drafts: draftStore.listPending().map(draftView) });
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/confirm") {
+      const draftStore = require("./lib/drafts");
+      const body = JSON.parse((await readBody(req)).toString());
+      try {
+        const d = await draftStore.confirm(body.draft_id, config);
+        return json(res, 200, {
+          ok: true, verified: d.verified, marker: d.marker,
+          docPaths: d.docPaths || [], draft: draftView(d),
+        });
+      } catch (err) {
+        return json(res, err.code || 500, { error: err.message });
+      }
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/reject") {
+      const draftStore = require("./lib/drafts");
+      const body = JSON.parse((await readBody(req)).toString());
+      try {
+        return json(res, 200, { ok: true, draft: draftView(draftStore.reject(body.draft_id)) });
+      } catch (err) {
+        return json(res, err.code || 500, { error: err.message });
       }
     }
 

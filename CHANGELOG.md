@@ -4,6 +4,25 @@ All notable changes to this project are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versioning: [SemVer](https://semver.org/).
 
+## [1.4.0] - 2026-07-26
+
+### Changed
+
+- **AI Accountant hardening — writes are now structurally safe.** The model
+  lost its direct write tools; `propose_entry` creates a draft, the UI renders
+  a card, and posting happens only on the user's Confirm tap. Posting is
+  idempotent (status flip + pre-post marker check against the day book),
+  validates ledgers/balance/date server-side, requires typed-amount
+  confirmation above ₹1 lakh, verifies every voucher by day-book read-back of
+  its `[M-<id>]` marker, and appends to an audit log.
+
+### Added
+
+- **Automatic document filing**: bill photos are saved on confirmation under
+  `C:\TallyData\Documents\FY<yy-yy>\<MM-Month>\<date>_<label>_M-<id>.jpg`
+  (snapshot-backed), with the voucher narration carrying the code and path —
+  two-way traceability between entries and source documents.
+
 ## [1.3.0] - 2026-07-26
 
 ### Added

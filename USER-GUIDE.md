@@ -119,17 +119,30 @@ as" to **Both** — that lets the AI talk to Tally. One time only.
 
 **Then just talk to it:**
 
-- 📷 Tap the camera, photograph a bill, hit send — it reads the bill, tells
-  you the entry it wants to make, and records it in Tally **only after you
-  say yes**.
-- "Paid ₹5,000 shop rent in cash yesterday" — same thing: it proposes, you
-  confirm, it records.
+- 📷 Tap the camera, photograph a bill, hit send — it reads the bill and
+  shows you a **card with the exact entry** and a green **"Confirm & record"**
+  button. Nothing goes into Tally until *you* tap that button. After you do,
+  it records the entry, double-checks it landed in Tally, and tells you.
+- "Paid ₹5,000 shop rent in cash yesterday" — same thing: card, your tap,
+  recorded, verified.
 - "How much did we sell this month?" / "What's my cash balance?" — it reads
   your Tally books and answers.
 
-It never records anything without asking you first, and Tally must be open on
-the cloud computer for it to work (the app's header shows "Tally connected"
-in green when everything is ready).
+Extra safety built in: it physically cannot record anything without your tap
+(this is enforced by the app, not just a promise); very large entries make
+you type the amount as a double-check; and every recorded entry carries a
+code like `[M-a1b2c3]` in its narration so it can always be traced.
+
+**Your bills are filed automatically.** When you confirm an entry that came
+from a photo, the photo is saved on the computer under
+`C:\TallyData\Documents`, organized by financial year and month (for example
+`FY2026-27 → 07-July`), with the date and entry code in the filename. The
+Tally entry's narration also mentions the file — so during any audit you can
+go from an entry to its bill, or from a bill to its entry, in seconds. These
+files are part of the nightly backup like everything else.
+
+Tally must be open on the cloud computer for all this to work (the app's
+header shows "Tally connected" in green when everything is ready).
 
 ## Signing with your DSC (the USB pen-drive-like token)
 

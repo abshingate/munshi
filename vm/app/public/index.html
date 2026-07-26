@@ -56,6 +56,20 @@
   .panel button { width:100%; margin-top:18px; background:var(--navy); color:#fff; border:0; border-radius:10px;
                   padding:13px; font-size:15px; font-weight:600; }
   .panel .err { color:#c0392b; font-size:13px; margin-top:10px; min-height:16px; }
+  /* Draft entry cards */
+  .draft { background:#fffaf0; border:1.5px solid var(--gold); border-radius:14px; padding:12px 14px;
+           margin:0 0 12px; max-width:92%; font-size:14px; }
+  .draft h4 { margin:0 0 8px; font-size:13px; color:var(--navy); display:flex; gap:6px; align-items:center; }
+  .draft table { width:100%; border-collapse:collapse; font-size:13.5px; margin:4px 0 8px; }
+  .draft td { padding:3px 4px; border-bottom:1px dashed #e8dfc8; }
+  .draft td:last-child { text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .draft .meta { font-size:12px; color:#7a6f52; margin-bottom:10px; }
+  .draft .btns { display:flex; gap:8px; }
+  .draft .btns button { flex:1; border:0; border-radius:10px; padding:11px; font-size:14px; font-weight:600; }
+  .draft .ok { background:#1b7a3d; color:#fff; }
+  .draft .no { background:#f0f0f0; color:#5d6b7c; }
+  .draft .done { font-weight:700; }
+  .draft .done.good { color:#1b7a3d; } .draft .done.bad { color:#c0392b; }
   .preview { display:flex; gap:6px; padding:0 12px 6px; }
   .preview img { height:52px; border-radius:8px; border:1px solid #d6dde6; }
   .hidden { display:none !important; }
@@ -170,9 +184,68 @@
 
   const STEP_LABELS = {
     tally_status: "Checking Tally…", list_ledgers: "Reading your ledgers…",
-    get_daybook: "Reading your entries…", create_ledger: "Creating ledger in Tally…",
-    create_voucher: "Posting the entry in Tally…", refresh_knowledge: "Refreshing my knowledge…",
+    get_daybook: "Reading your entries…", propose_entry: "Preparing the entry for your approval…",
+    refresh_knowledge: "Refreshing my knowledge…",
   };
+
+  function fmtDate(yyyymmdd) {
+    return `${yyyymmdd.slice(6,8)}-${yyyymmdd.slice(4,6)}-${yyyymmdd.slice(0,4)}`;
+  }
+  function fmtAmt(n) { return "₹" + Number(n).toLocaleString("en-IN", { maximumFractionDigits: 2 }); }
+
+  function renderDraft(d) {
+    const card = el("div", "draft");
+    card.dataset.id = d.id;
+    const h = el("h4", null, `📋 Entry for your approval — ${d.voucher.voucher_type}, ${fmtDate(d.voucher.date)}`);
+    card.appendChild(h);
+    if (d.voucher.narration) card.appendChild(el("div", "meta", d.voucher.narration));
+    const t = document.createElement("table");
+    for (const e of d.voucher.entries) {
+      const tr = document.createElement("tr");
+      tr.appendChild(el("td", null, `${e.type === "debit" ? "Dr" : "Cr"}  ${e.ledger}`));
+      tr.appendChild(el("td", null, fmtAmt(e.amount)));
+      t.appendChild(tr);
+    }
+    card.appendChild(t);
+    const extras = [];
+    if ((d.newLedgers || []).length) extras.push(`will create ledger${d.newLedgers.length > 1 ? "s" : ""}: ${d.newLedgers.map((l) => `${l.name} (${l.group})`).join(", ")}`);
+    if (d.docCount) extras.push(`${d.docCount} bill photo${d.docCount > 1 ? "s" : ""} will be filed with this entry`);
+    if (extras.length) card.appendChild(el("div", "meta", "• " + extras.join("\n• ")));
+
+    const btns = el("div", "btns");
+    const ok = el("button", "ok", "✓ Confirm & record");
+    const no = el("button", "no", "Reject");
+    btns.append(no, ok);
+    card.appendChild(btns);
+
+    ok.addEventListener("click", async () => {
+      if (d.bigAmount) {
+        const typed = prompt(`This is a large entry (${fmtAmt(d.total)}). Type the amount ${d.total} to confirm:`);
+        if (typed === null) return;
+        if (Number(String(typed).replace(/[^0-9.]/g, "")) !== Number(d.total)) { alert("Amount didn't match — not recorded."); return; }
+      }
+      ok.disabled = no.disabled = true; ok.textContent = "Recording…";
+      try {
+        const r = await api("/api/confirm", { draft_id: d.id });
+        btns.remove();
+        card.appendChild(el("div", "done good",
+          r.verified ? "✅ Recorded in Tally and verified in the day book." : "✅ Recorded in Tally (verification pending — check the day book)."));
+        if (r.docPaths && r.docPaths.length) card.appendChild(el("div", "meta", "📁 Bill filed: " + r.docPaths[0]));
+      } catch (err) {
+        ok.disabled = no.disabled = false; ok.textContent = "✓ Confirm & record";
+        card.appendChild(el("div", "done bad", "⚠️ " + err.message));
+      }
+      chat.scrollTop = chat.scrollHeight;
+    });
+    no.addEventListener("click", async () => {
+      ok.disabled = no.disabled = true;
+      try { await api("/api/reject", { draft_id: d.id }); btns.remove(); card.appendChild(el("div", "done", "Rejected — nothing was recorded.")); }
+      catch (err) { ok.disabled = no.disabled = false; card.appendChild(el("div", "done bad", "⚠️ " + err.message)); }
+    });
+
+    chat.appendChild(card);
+    chat.scrollTop = chat.scrollHeight;
+  }
 
   async function send() {
     const text = $("input").value.trim();
@@ -186,6 +259,7 @@
       thinking(false);
       for (const s of data.steps || []) addStep(STEP_LABELS[s] || s);
       addMsg("assistant", data.reply || "(no reply)");
+      for (const d of data.drafts || []) renderDraft(d);
     } catch (err) {
       thinking(false);
       addMsg("assistant", "⚠️ " + err.message);
@@ -265,6 +339,8 @@
       } else {
         for (const m of h.messages) addMsg(m.role, m.text, m.images || undefined);
       }
+      const p = await api("/api/drafts");
+      for (const d of p.drafts || []) renderDraft(d);
     } catch {}
   }
 

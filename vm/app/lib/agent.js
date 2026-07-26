@@ -15,8 +15,9 @@ Your user is NOT an accountant. They may send you a photo of a bill, or say thin
 
 How you work:
 - You are connected to the TallyPrime running on this machine through tools. Use them to ground every answer — never invent balances, ledgers, or entries. If Tally is offline, say so and explain how to open it (open Tally; it must be running with 'TallyPrime acts as Both' under F1 > Settings > Connectivity).
-- When the user sends a bill/invoice photo: read it carefully (vendor, date, items, taxable value, GST breakup CGST/SGST/IGST, total). Then propose the exact entry you intend to make.
-- THE GOLDEN RULE: never create or modify anything in Tally without first showing the user a plain-language summary of the entry (who, what, amount, date, which ledgers) and receiving their clear confirmation ("yes", "ok", "confirm"). One confirmation covers the ledgers you must create for that entry too — list them in the same summary.
+- When the user sends a bill/invoice photo: read it carefully (vendor, date, items, taxable value, GST breakup CGST/SGST/IGST, total). Then draft the exact entry.
+- THE GOLDEN RULE (enforced by the app, not just by you): you CANNOT write to Tally directly. The only way to record anything is the propose_entry tool, which creates a DRAFT. The app shows the user a card with the full entry and a Confirm button — posting happens only when the user taps Confirm. Include any new ledgers the entry needs in the same draft. After proposing, briefly tell the user what's in the card and to tap Confirm to record it (or Reject to discard). Never claim an entry has been recorded — the app tells the user that after posting and verification.
+- If the bill photo came with the same message, the app files it automatically under C:\TallyData\Documents (organized by financial year and month) when the draft is confirmed, and links it in the voucher narration — you can mention this.
 - Choose correct voucher types: Purchase for supplier bills, Sales for sales invoices, Payment for money going out, Receipt for money coming in, Contra for bank<->cash, Journal for adjustments.
 - Follow Indian conventions: amounts in INR (₹), financial year April-March, GST split into CGST+SGST for intra-state and IGST for inter-state. If the bill's GST treatment is unclear, ask one short question rather than guessing.
 - Dates: users speak casually ("yesterday", "26th"). Resolve to real dates; pass dates to tools as YYYYMMDD.
@@ -50,27 +51,14 @@ const TOOLS = [
     },
   },
   {
-    name: "create_ledger",
-    description: "Create a new ledger in Tally. ONLY after the user has confirmed the entry that needs it. Group must be a valid Tally group (e.g. 'Sundry Creditors', 'Sundry Debtors', 'Indirect Expenses', 'Duties & Taxes', 'Bank Accounts', 'Cash-in-Hand').",
-    input_schema: {
-      type: "object",
-      properties: {
-        name: { type: "string", description: "Ledger name, e.g. 'Sharma Traders'" },
-        group: { type: "string", description: "Parent Tally group" },
-      },
-      required: ["name", "group"],
-      additionalProperties: false,
-    },
-  },
-  {
-    name: "create_voucher",
-    description: "Post a voucher (accounting entry) to Tally. ONLY after the user has explicitly confirmed the summarized entry in this conversation. Debits and credits must balance.",
+    name: "propose_entry",
+    description: "Create a DRAFT accounting entry for the user to confirm. This is the ONLY way to record anything in Tally — the app shows the draft as a card and posts it only when the user taps Confirm. Include any ledgers that must be created for this entry in new_ledgers (with correct Tally groups, e.g. 'Sundry Creditors', 'Indirect Expenses', 'Duties & Taxes'). Debits and credits must balance.",
     input_schema: {
       type: "object",
       properties: {
         voucher_type: { type: "string", enum: ["Journal", "Payment", "Receipt", "Contra", "Sales", "Purchase"] },
         date: { type: "string", description: "Voucher date YYYYMMDD" },
-        narration: { type: "string", description: "Short human-readable narration" },
+        narration: { type: "string", description: "Short human-readable narration, e.g. 'Shop rent for July paid in cash'" },
         entries: {
           type: "array",
           items: {
@@ -81,6 +69,19 @@ const TOOLS = [
               type: { type: "string", enum: ["debit", "credit"] },
             },
             required: ["ledger", "amount", "type"],
+            additionalProperties: false,
+          },
+        },
+        new_ledgers: {
+          type: "array",
+          description: "Ledgers that don't exist yet and must be created before posting",
+          items: {
+            type: "object",
+            properties: {
+              name: { type: "string" },
+              group: { type: "string", description: "Parent Tally group" },
+            },
+            required: ["name", "group"],
             additionalProperties: false,
           },
         },
@@ -96,7 +97,21 @@ const TOOLS = [
   },
 ];
 
-async function executeTool(name, input, config) {
+function validateDraft(input) {
+  const dr = (input.entries || []).filter((e) => e.type === "debit").reduce((s, e) => s + e.amount, 0);
+  const cr = (input.entries || []).filter((e) => e.type === "credit").reduce((s, e) => s + e.amount, 0);
+  if (!input.entries || input.entries.length < 2) throw new Error("An entry needs at least one debit and one credit line.");
+  if (Math.abs(dr - cr) > 0.01) throw new Error(`Draft does not balance: debits ${dr} vs credits ${cr}.`);
+  if (!/^\d{8}$/.test(input.date || "")) throw new Error("Date must be YYYYMMDD.");
+  const d = new Date(`${input.date.slice(0, 4)}-${input.date.slice(4, 6)}-${input.date.slice(6, 8)}`);
+  const max = new Date(Date.now() + 7 * 86400000);
+  if (isNaN(d.getTime()) || d < new Date("2000-01-01") || d > max) {
+    throw new Error("Date is invalid or too far in the future.");
+  }
+  return { total: dr };
+}
+
+async function executeTool(name, input, config, context) {
   const company = config.company || undefined;
   switch (name) {
     case "tally_status": {
@@ -109,16 +124,24 @@ async function executeTool(name, input, config) {
       return { ledgers: await tally.listLedgers() };
     case "get_daybook":
       return await tally.dayBook(input.from_date, input.to_date, company);
-    case "create_ledger":
-      return await tally.createLedger({ name: input.name, group: input.group, company });
-    case "create_voucher":
-      return await tally.createVoucher({
-        voucherType: input.voucher_type,
-        date: input.date,
-        narration: input.narration,
-        entries: input.entries,
-        company,
+    case "propose_entry": {
+      const { total } = validateDraft(input);
+      const draft = context.createDraft({
+        voucher: {
+          voucher_type: input.voucher_type,
+          date: input.date,
+          narration: input.narration || "",
+          entries: input.entries,
+        },
+        newLedgers: input.new_ledgers || [],
+        total,
       });
+      return {
+        draft_id: draft.id,
+        status: "awaiting_user_confirmation",
+        note: "The draft card is now visible to the user. Posting happens only when they tap Confirm — do not claim the entry is recorded.",
+      };
+    }
     case "refresh_knowledge":
       return await buildKnowledge();
     default:
@@ -180,7 +203,7 @@ function buildSystem() {
 // --- The agentic loop -------------------------------------------------------
 // messages: full conversation (persisted by the server). Returns
 // { reply, steps } and appends the assistant/tool turns to messages.
-async function runAgent({ provider, config, messages, onStep }) {
+async function runAgent({ provider, config, messages, context = {}, onStep }) {
   const steps = [];
   const MAX_TURNS = 12;
 
@@ -214,7 +237,7 @@ async function runAgent({ provider, config, messages, onStep }) {
       steps.push(tu.name);
       if (onStep) onStep(tu.name);
       try {
-        const result = await executeTool(tu.name, tu.input || {}, config);
+        const result = await executeTool(tu.name, tu.input || {}, config, context);
         results.push({
           type: "tool_result",
           tool_use_id: tu.id,
