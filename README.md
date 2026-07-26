@@ -42,7 +42,7 @@ flowchart LR
 |---|---|
 | Machine | Windows Server 2022, t3.large (2 vCPU / 8 GB), 100 GB encrypted disk, Mumbai (`ap-south-1`) |
 | Access | **Browser** via Amazon DCV (`https://<ip>:8443`), or RDP, or AWS Console → Fleet Manager |
-| Pre-installed | Chrome, Adobe Reader, 7-Zip, Notepad++, **Java 8 (32-bit + 64-bit — required by GST emSigner / TRACES WebSigner)**, **Google Drive** (file sharing across machines — sign in once), Amazon DCV, IST timezone, desktop shortcuts for GST / Income-tax / TRACES / EPFO / ESIC / MCA portals and DSC utilities |
+| Pre-installed | Chrome, Adobe Reader, 7-Zip, Notepad++, **Java 8 (32-bit + 64-bit — required by GST emSigner / TRACES WebSigner)**, **Google Drive sync** (via rclone — the official client doesn't support Windows Server, ADR-0015; one-time sign-in button, then `C:\TallyData\Drive` ↔ your Drive's `TallyCloud` folder every 5 min), Amazon DCV, IST timezone, desktop shortcuts for GST / Income-tax / TRACES / EPFO / ESIC / MCA portals and DSC utilities |
 | Data safety | Disk persists across stop/start · daily snapshots (14 kept) · termination protection on |
 | Cost safety | Auto-stops after ~1 hour of idle CPU, so forgetting it never costs a full month |
 | Alerting | Email on auto-stop events + AWS Budget emails at 80%/100% of monthly budget (set `alert_email`) |

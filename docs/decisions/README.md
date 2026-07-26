@@ -30,3 +30,4 @@ never delete or rewrite history, add a new record).
 | [0012](0012-document-filing.md) | Bill documents on the filesystem (FY/month tree) cross-referenced in narrations | accepted |
 | [0013](0013-tailwind-build-time-css.md) | Tailwind CSS via a build-time compiled stylesheet, committed to the repo | accepted |
 | [0014](0014-tally-edition-editlog-default.md) | Tally edition configurable, defaulting to Edit Log (MCA audit trail) | accepted |
+| [0015](0015-google-drive-via-rclone.md) | Google Drive sync via rclone (official client unsupported on Windows Server) | accepted |

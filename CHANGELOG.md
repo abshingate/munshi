@@ -8,10 +8,12 @@ versioning: [SemVer](https://semver.org/).
 
 ### Added
 
-- **Google Drive for Desktop** as a self-healed component (silent install
-  from Google's stable URL, health-checked, link-checked) — easy file
-  sharing between the VM and the user's other devices; sign-in is a
-  one-time manual step.
+- **Google Drive sync via rclone** (ADR-0015): Google's official Drive
+  client turned out not to support Windows Server (verified — silent
+  installer failure), so file sharing ships as rclone two-way sync instead:
+  one-time "Set up Google Drive" desktop button (Google sign-in), then
+  `C:\TallyData\Drive` ↔ the Drive `TallyCloud` folder every 5 minutes.
+  rclone is a self-healed component; sync state is health-checked.
 
 ## [1.6.0] - 2026-07-26
 

@@ -46,6 +46,12 @@ pause
 powershell -NoExit -Command "claude"
 "@ | Out-File "$desktop\Claude Code.cmd" -Encoding ascii
 
+@"
+@echo off
+powershell -ExecutionPolicy Bypass -File C:\HealthCheck\vm\gdrive-setup.ps1
+pause
+"@ | Out-File "$desktop\Set up Google Drive.cmd" -Encoding ascii
+
 New-UrlShortcut "$desktop\Help and User Guide.url" "file:///C:/HealthCheck/vm/help.html"
 New-UrlShortcut "$desktop\AI Accountant.url"       "https://localhost:8444"
 New-UrlShortcut "$desktop\Download TallyPrime.url" "https://tallysolutions.com/download/"

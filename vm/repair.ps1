@@ -45,6 +45,7 @@ $apps = [ordered]@{
     "notepadplusplus" = @("C:\Program Files\Notepad++\notepad++.exe")
     "git"             = @("C:\Program Files\Git\cmd\git.exe")
     "nodejs-lts"      = @("C:\Program Files\nodejs\node.exe")
+    "rclone"          = @("C:\ProgramData\chocolatey\bin\rclone.exe")
 }
 function Test-AnyPath($paths) { @($paths | Where-Object { Test-Path $_ }).Count -gt 0 }
 foreach ($pkg in $apps.Keys) {
@@ -161,17 +162,15 @@ if (Test-Path $akSrc) {
     }
 } else { Report "FAILED" "SSH authorized key (missing from assets bucket)" }
 
-# --- Google Drive for Desktop (file sharing between machines and the VM) -----
-$gdInstalled = @(Get-ChildItem "C:\Program Files\Google\Drive File Stream" -Recurse -Filter "GoogleDriveFS.exe" -ErrorAction SilentlyContinue).Count -gt 0
-if ($gdInstalled) { Report "OK" "Google Drive" }
-else {
-    $gdSetup = "C:\Installers\GoogleDriveSetup.exe"
-    if (Get-File @("https://dl.google.com/drive-file-stream/GoogleDriveSetup.exe") $gdSetup 50MB) {
-        Start-Process $gdSetup -Wait -ArgumentList "--silent --desktop_shortcut"
-        $gdInstalled = @(Get-ChildItem "C:\Program Files\Google\Drive File Stream" -Recurse -Filter "GoogleDriveFS.exe" -ErrorAction SilentlyContinue).Count -gt 0
-        if ($gdInstalled) { Report "FIXED" "Google Drive (sign in once from the desktop icon)" }
-        else { Report "FAILED" "Google Drive install did not complete" }
-    } else { Report "FAILED" "Google Drive download" }
+# --- Google Drive sync status (rclone-based; Google's official Drive client
+# --- does not support Windows Server — see ADR-0015). rclone itself installs
+# --- via the choco apps loop above; the one-time Google sign-in is the
+# --- desktop "Set up Google Drive" button. -----------------------------------
+if (Test-Path "C:\ProgramData\rclone\rclone.conf") {
+    if (schtasks /Query /TN "TallyCloudDriveSync" 2>$null) { Report "OK" "Google Drive sync (configured, every 5 min)" }
+    else { Report "FAILED" "Google Drive sync task missing - re-run 'Set up Google Drive' on the desktop" }
+} else {
+    Report "OK" "Google Drive sync ready (one-time: run 'Set up Google Drive' on the desktop)"
 }
 
 # --- VirtualHere client (DSC token over USB-over-IP) --------------------------

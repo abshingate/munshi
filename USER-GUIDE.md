@@ -212,11 +212,14 @@ also a monthly budget alarm: if spending ever heads past about Rs. 2,000, you
 get a warning email long before it becomes a problem.
 
 **How do I get files onto / off the cloud computer?**
-Google Drive is installed on it. Sign in once (Google Drive icon on the
-cloud computer's desktop) and your Drive appears there as a normal folder —
-anything you put in Drive from your phone or laptop shows up on the cloud
-computer, and vice versa. Perfect for bills, statements, or backups from
-your CA.
+Google Drive sync is built in. One time only: double-click **"Set up Google
+Drive"** on the cloud computer's desktop and sign in to your Google account
+when the page opens. After that, a folder called **TallyCloud** appears in
+your Google Drive — anything you put there (from your phone or any computer)
+shows up on the cloud computer in `C:\TallyData\Drive` within 5 minutes, and
+the other way round too. Perfect for bills, statements, or backups from your
+CA. (For a one-off file you can always just open drive.google.com in the
+cloud computer's Chrome.)
 
 **I deleted something in Tally by mistake!**
 A backup of the whole computer is taken every night at 2 AM (the last 14 nights
