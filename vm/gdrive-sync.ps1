@@ -45,7 +45,7 @@ foreach ($o in $orphans) { Remove-Item $o.FullName -Force -ErrorAction SilentlyC
 Files still arriving end in .partial - a file with its normal name is complete." | Out-File $status -Encoding ascii
 
 # --recover / --max-lock let bisync survive interruptions and stale locks
-$flags = "--create-empty-src-dirs --recover --max-lock 15m --conflict-resolve newer"
+$flags = "--create-empty-src-dirs --workdir C:\ProgramData\rclone\bisync --recover --max-lock 15m --conflict-resolve newer"
 cmd /c "`"$rclone`" --config `"$conf`" bisync `"$remote`" `"$local`" $flags 2>nul" | Out-Null
 $code = $LASTEXITCODE
 $recovered = $false

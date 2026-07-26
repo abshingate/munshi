@@ -47,7 +47,7 @@ $remote = "gdrive:$folder"
 Write-Host ""
 Write-Host "Doing the first sync (this creates '$folder' in your Google Drive if it doesn't exist)..."
 cmd /c "`"$rclone`" --config `"$conf`" mkdir `"$remote`" 2>nul" | Out-Null
-& $rclone --config $conf bisync $remote $local --create-empty-src-dirs --resync
+& $rclone --config $conf bisync $remote $local --create-empty-src-dirs --workdir C:\ProgramData\rclone\bisync --resync
 if ($LASTEXITCODE -ne 0) {
     Write-Host ""
     Write-Host "The first sync did not complete - check the messages above and run this again."
