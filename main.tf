@@ -92,6 +92,14 @@ resource "aws_s3_object" "vm_files" {
   etag   = filemd5("${path.module}/vm/${each.value}")
 }
 
+# Edition selector read by repair.ps1 when staging the Tally installer
+# (TPEL = Edit Log build for MCA audit-trail compliance, TP = standard).
+resource "aws_s3_object" "tally_edition" {
+  bucket  = aws_s3_bucket.assets.id
+  key     = "vm/tally-edition.txt"
+  content = var.tally_edition
+}
+
 # Public half of the generated key pair — repair.ps1 installs it as the
 # SSH authorized key, enabling the DSC-token reverse tunnel from the owner's
 # machine (which holds the matching .pem).

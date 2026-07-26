@@ -19,9 +19,10 @@ check() {
 check "https://community.chocolatey.org/install.ps1"
 # Amazon DCV latest server MSI
 check "https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-server-x64-Release.msi"
-# TallyPrime: dynamic-discovery source + last-known-good mirror
+# TallyPrime: dynamic-discovery source + last-known-good mirrors (both editions)
 check "https://tallysolutions.com/utility/js/DownloadUtility-india.js"
 check "https://tallymirror.tallysolutions.com/download_centre/Rel7.1/TP/Full/setup.exe"
+check "https://tallymirror.tallysolutions.com/download_centre/Rel7.1/TPEL/Full/setup.exe"
 # VirtualHere client (DSC over USB-over-IP)
 check "https://www.virtualhere.com/sites/default/files/usbclient/vhui64.exe"
 # Claude Code npm package

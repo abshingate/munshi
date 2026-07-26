@@ -237,6 +237,14 @@ click in the desktop "DSC Setup" folder, first time only.
   the machine and its disk. Termination protection also blocks accidental
   console/API terminations; snapshots survive even a destroy.
 - **Tally license** activates once and survives stop/start (same machine every time).
+- **Tally edition & MCA compliance**: the staged installer defaults to
+  **TallyPrime Edit Log** (always-on audit trail — required for Pvt Ltd/Ltd
+  companies under MCA Companies (Accounts) Rules since Apr 2023; auditors
+  report on it annually). Proprietorships/partnerships can set
+  `tally_edition = "standard"` in `terraform.tfvars`. Same license, either
+  build. The wider posture already fits the electronic-books rules: data on a
+  server in India (Mumbai) with daily backups (nightly snapshots). Confirm
+  specifics with your CA. (ADR-0014)
 - Windows Server license cost is included in the EC2 hourly rate — nothing to buy.
 
 ## Sharing this setup

@@ -4,6 +4,10 @@
 allowed_cidr = "1.2.3.4/32"
 
 # Everything below is optional (sensible defaults shown).
+# Tally build: "editlog" = TallyPrime Edit Log (always-on audit trail —
+# REQUIRED for Pvt Ltd / Ltd companies under MCA rules; safe default).
+# Proprietorships/partnerships may set "standard".
+# tally_edition           = "editlog"
 # name                    = "tally-workstation"
 # region                  = "ap-south-1"
 # instance_type           = "t3.large"

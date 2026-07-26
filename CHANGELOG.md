@@ -4,6 +4,17 @@ All notable changes to this project are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versioning: [SemVer](https://semver.org/).
 
+## [1.6.0] - 2026-07-26
+
+### Added
+
+- **Configurable Tally edition, Edit Log by default** (`tally_edition`
+  variable; ADR-0014): repair stages TallyPrime Edit Log (TPEL — always-on
+  audit trail, MCA-compliant for companies) unless `standard` is chosen.
+  Edition changes re-stage the right installer on the desktop with a
+  switch note; both mirror URLs join dynamic discovery and the weekly
+  link check.
+
 ## [1.5.0] - 2026-07-26
 
 ### Changed

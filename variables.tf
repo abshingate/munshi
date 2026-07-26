@@ -39,6 +39,16 @@ variable "enable_idle_autostop" {
   default     = true
 }
 
+variable "tally_edition" {
+  description = "Which TallyPrime build to stage: 'editlog' (TallyPrime Edit Log — always-on audit trail, required for companies under MCA Companies (Accounts) Rules since 1 Apr 2023; the safe default) or 'standard' (edit log optional; fine for proprietorships/partnerships). Same Tally license works for both."
+  type        = string
+  default     = "editlog"
+  validation {
+    condition     = contains(["editlog", "standard"], var.tally_edition)
+    error_message = "tally_edition must be 'editlog' or 'standard'."
+  }
+}
+
 variable "alert_email" {
   description = "Email address for alerts (auto-stop events, budget warnings). Empty string disables alerting. AWS sends a one-time confirmation email you must accept."
   type        = string

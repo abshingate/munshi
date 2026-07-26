@@ -91,28 +91,51 @@ else {
     else { Report "FAILED" "Amazon DCV (RDP and Fleet Manager still work)" }
 }
 
-# --- TallyPrime installer -----------------------------------------------------
-# URL is discovered live from Tally's own site JS (newest release wins), with
-# last-known-good mirrors as fallback. Skipped once Tally is installed.
-if (Test-Path "C:\Program Files\TallyPrime\tally.exe") { Report "OK" "TallyPrime (installed)" }
-elseif (Test-Path "C:\Installers\TallyPrimeSetup.exe") { Report "OK" "TallyPrime installer (staged)" }
-else {
+# --- TallyPrime installer (edition-aware) ------------------------------------
+# Edition comes from vm/tally-edition.txt (written by terraform): "editlog"
+# (TPEL build — always-on audit trail, MCA-compliant, the default) or
+# "standard" (TP build). URL is discovered live from Tally's own site JS
+# (newest release wins), with last-known-good mirrors as fallback.
+$edition = "editlog"
+$edFile = "C:\HealthCheck\vm\tally-edition.txt"
+if (Test-Path $edFile) {
+    $t = (Get-Content $edFile -Raw).Trim()
+    if ($t -in @("standard", "editlog")) { $edition = $t }
+}
+$sub = "TPEL"; $edLabel = "Edit Log edition"
+if ($edition -eq "standard") { $sub = "TP"; $edLabel = "standard edition" }
+$edMarker = "C:\Installers\tally-installer-edition.txt"
+$stagedEdition = ""
+if (Test-Path $edMarker) { $stagedEdition = (Get-Content $edMarker -Raw).Trim() }
+$installerOk = (Test-Path "C:\Installers\TallyPrimeSetup.exe") -and ($stagedEdition -eq $edition)
+
+if (-not $installerOk) {
     $urls = @()
     foreach ($js in @("https://tallysolutions.com/utility/js/DownloadUtility-india.js",
                       "https://tallysolutions.com/utility/js/DownloadUtility.js")) {
         try {
             $body = (Invoke-WebRequest -Uri $js -UseBasicParsing -TimeoutSec 60).Content -replace '\\/', '/'
-            $urls += [regex]::Matches($body, 'https://tallymirror\.tallysolutions\.com/download_centre/Rel[._]?[0-9]+\.[0-9]+/TP/Full/setup\.exe') |
+            $urls += [regex]::Matches($body, "https://tallymirror\.tallysolutions\.com/download_centre/Rel[._]?[0-9]+\.[0-9]+/$sub/Full/setup\.exe") |
                 ForEach-Object { $_.Value }
         } catch { Write-Output "  Tally JS fetch failed ($js)" }
     }
     $urls = @($urls | Sort-Object -Unique -Descending -Property `
         @{Expression = { [version]($_ -replace '.*Rel[._]?([0-9]+\.[0-9]+).*', '$1') }})
-    $urls += @("https://tallymirror.tallysolutions.com/download_centre/Rel7.1/TP/Full/setup.exe",
-               "https://tallymirror.tallysolutions.com/download_centre/Rel6.2/TP/Full/setup.exe")
+    $urls += @("https://tallymirror.tallysolutions.com/download_centre/Rel7.1/$sub/Full/setup.exe",
+               "https://tallymirror.tallysolutions.com/download_centre/Rel6.2/$sub/Full/setup.exe")
     if (Get-File $urls "C:\Installers\TallyPrimeSetup.exe" 10MB) {
-        Report "FIXED" "TallyPrime installer"
-    } else { Report "FAILED" "TallyPrime installer (use the Download TallyPrime desktop shortcut)" }
+        $edition | Out-File $edMarker -Encoding ascii
+        Copy-Item "C:\Installers\TallyPrimeSetup.exe" "C:\Users\Public\Desktop\TallyPrimeSetup.exe" -Force
+        if (Test-Path "C:\Program Files\TallyPrime\tally.exe") {
+            Report "FIXED" "TallyPrime installer ($edLabel) staged - run TallyPrimeSetup.exe on the desktop to switch editions"
+        } else {
+            Report "FIXED" "TallyPrime installer ($edLabel) staged"
+        }
+    } else { Report "FAILED" "TallyPrime installer ($edLabel) (use the Download TallyPrime desktop shortcut)" }
+} elseif (Test-Path "C:\Program Files\TallyPrime\tally.exe") {
+    Report "OK" "TallyPrime (installed; $edLabel installer staged)"
+} else {
+    Report "OK" "TallyPrime installer staged ($edLabel)"
 }
 
 # --- OpenSSH server (carries the DSC-token reverse tunnel) -------------------
