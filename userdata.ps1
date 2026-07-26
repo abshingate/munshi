@@ -76,6 +76,12 @@ New-UrlShortcut "$dsc\MCA emBridge signer.url"                            "https
 New-UrlShortcut "$dsc\ePass2003 token driver.url"                         "https://www.epass2003.com/"
 New-UrlShortcut "$dsc\WD ProxKey token driver.url"                        "https://www.wdproxkey.com/"
 New-UrlShortcut "$dsc\Capricorn-mToken drivers (repository).url"          "https://www.certificate.digital/repository/"
+# VirtualHere client: lets a DSC token plugged into the user's local computer
+# appear on this machine (pair with the free single-device server locally).
+try {
+    Invoke-WebRequest -Uri "https://www.virtualhere.com/sites/default/files/usbclient/vhui64.exe" `
+        -OutFile "$dsc\VirtualHere Client.exe" -UseBasicParsing
+} catch { Write-Output "VirtualHere client download failed: $_" }
 
 # --- On-VM health check (also runnable remotely via SSM) ---------------------
 @'
