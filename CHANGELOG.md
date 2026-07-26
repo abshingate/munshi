@@ -4,6 +4,30 @@ All notable changes to this project are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versioning: [SemVer](https://semver.org/).
 
+## [1.2.0] - 2026-07-26
+
+### Added
+
+- **DSC token sharing without subscriptions** (`6 - Share DSC Token` /
+  `scripts/share-dsc.sh`): VirtualHere server auto-provisioned on the owner's
+  Mac, connected to the VM's VirtualHere client through an SSH reverse tunnel.
+  The VM's built-in OpenSSH server is now a self-healing repair component;
+  its authorized key (the deployment key pair's public half) is delivered via
+  the assets bucket; port 22 is open only to `allowed_cidr`.
+- **ARCHITECTURE.md**: contributor documentation — actors, lifecycle flows
+  (first boot, every-boot converge, live-update path, DSC tunnel), repo map,
+  and the project invariants.
+
+### Changed
+
+- Info wallpaper redesigned twice from user feedback: compact top-right panel
+  (clear of desktop icons), content-computed height (can't be cropped), and
+  rendering at the display's actual resolution (DCV resizes with the browser).
+
+### Fixed
+
+- VirtualHere server download URL (vendor moved it — caught while automating).
+
 ## [1.1.0] - 2026-07-26
 
 ### Added

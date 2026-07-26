@@ -13,6 +13,13 @@ judged against that bar.
 - User-facing text (USER-GUIDE.md, VM read-me, script output) must stay in
   plain language. If your change adds jargon there, rewrite it.
 
+## Start here
+
+Read **[ARCHITECTURE.md](ARCHITECTURE.md)** first — it maps the whole system
+(actors, lifecycle flows, repo layout), explains the design decisions, and
+lists the invariants you must not break. Most review feedback on PRs is one of
+those invariants.
+
 ## Development setup
 
 ```bash

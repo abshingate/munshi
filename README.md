@@ -51,9 +51,11 @@ flowchart LR
 | Self-healing | Every install re-verified at each boot; "Repair This Computer" button + `./scripts/repair.sh` reinstall anything broken; Tally's download URL is discovered live from their site |
 | On-VM help | "Help and User Guide" desktop page (works offline) + an info wallpaper showing locations, versions, and what to do when something breaks |
 
-## Two audiences, two documents
+## Three audiences, three documents
 
 - **This README** is for the (technical) person who deploys and maintains the setup.
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** is for contributors — how the system
+  works internally, lifecycle flows, and the invariants changes must respect.
 - **[USER-GUIDE.md](USER-GUIDE.md)** is for the person who *uses* the machine —
   written in plain language, no jargon. Give them that file and the numbered
   `*.command` buttons in this folder (`1 - Turn ON Tally Computer`, `2 - Get
