@@ -1,0 +1,12 @@
+# Copy this file to terraform.tfvars and fill in your values.
+
+# Your public IP with /32 — find it with:  curl -s https://checkip.amazonaws.com
+allowed_cidr = "1.2.3.4/32"
+
+# Everything below is optional (sensible defaults shown).
+# name                    = "tally-workstation"
+# region                  = "ap-south-1"
+# instance_type           = "t3.large"
+# volume_size_gb          = 100
+# snapshot_retention_days = 14
+# enable_idle_autostop    = true

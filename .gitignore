@@ -1,0 +1,9 @@
+# Terraform state contains secrets and account details — never commit it
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+
+# Your personal values (IP address) and the Windows password key
+terraform.tfvars
+*.pem
