@@ -98,10 +98,17 @@ async function dayBook(fromDate, toDate, company, opts = {}) {
       party: tagValues(b, "PARTYLEDGERNAME")[0] || "",
       narration: tagValues(b, "NARRATION")[0] || "",
       remoteId: remoteM ? remoteM[1] : "",
-      ledgerEntries: tagValues(b, "LEDGERNAME").map((name, i) => ({
-        ledger: name,
-        amount: tagValues(b, "AMOUNT")[i] || "",
-      })),
+      // Parse each ALLLEDGERENTRIES.LIST block separately and strip its nested
+      // *.LIST sub-blocks (BANKALLOCATIONS, BILLALLOCATIONS, …) first — they
+      // carry their own AMOUNT tags, and index-pairing names to amounts across
+      // the whole voucher mis-signs any entry that follows one.
+      ledgerEntries: (b.match(/<ALLLEDGERENTRIES\.LIST>[\s\S]*?<\/ALLLEDGERENTRIES\.LIST>/gi) || []).map((eb) => {
+        const clean = eb.replace(/<((?!ALLLEDGERENTRIES)[A-Z0-9]+\.LIST)>[\s\S]*?<\/\1>/gi, "");
+        return {
+          ledger: tagValues(clean, "LEDGERNAME")[0] || "",
+          amount: tagValues(clean, "AMOUNT")[0] || "",
+        };
+      }),
       ...(opts.includeRaw ? { raw: b } : {}),
     };
   });

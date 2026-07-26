@@ -198,6 +198,39 @@ function matchLines(lines, vouchers, bankLedger) {
   tryPass(3, false);  // amount unique within 3 days
   tryPass(15, false); // amount unique within the period
 
+  // Symmetric groups: when the leftovers on both sides form equal-sized sets
+  // of identical (date, amount, direction) items — e.g. two ₹400 fees paid the
+  // same day — any pairing is equally defensible, so pair them off rather than
+  // leaving both sides "unmatched" for a human to shrug at. Refs are still
+  // preferred: within a group, ref-sharing pairs are consumed first.
+  const groupKey = (date, amount, moneyIn) => `${date}|${amount.toFixed(2)}|${moneyIn}`;
+  const leftS = stmt.filter((s) => !usedS.has(s.id));
+  const leftV = bank.filter((b) => !usedV.has(b.id));
+  const groups = new Map();
+  for (const s of leftS) {
+    const k = groupKey(s.line.date, s.amount, s.moneyIn);
+    (groups.get(k) || groups.set(k, { s: [], v: [] }).get(k)).s.push(s);
+  }
+  for (const b of leftV) {
+    const k = groupKey(b.voucher.date, b.amount, b.moneyIn);
+    const g = groups.get(k);
+    if (g) g.v.push(b);
+  }
+  for (const g of groups.values()) {
+    if (g.s.length < 2 || g.s.length !== g.v.length) continue;
+    const vLeft = [...g.v];
+    for (const s of g.s) {
+      const iRef = vLeft.findIndex((b) => s.refs.some((r) => b.refs.includes(r)));
+      const b = vLeft.splice(iRef >= 0 ? iRef : 0, 1)[0];
+      usedS.add(s.id); usedV.add(b.id);
+      matched.push({
+        stmt: s.line, voucher: b.voucher,
+        reason: "identical amount/date group (paired off)",
+        confidence: "medium",
+      });
+    }
+  }
+
   return {
     matched,
     bankOnly: stmt.filter((s) => !usedS.has(s.id)).map((s) => s.line),

@@ -4,6 +4,26 @@ All notable changes to this project are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versioning: [SemVer](https://semver.org/).
 
+## [1.9.2] - 2026-07-26
+
+### Fixed
+
+- **Voucher ledger-entry amounts could carry the wrong value/sign** when an
+  entry contained nested allocation blocks (BANKALLOCATIONS, BILLALLOCATIONS
+  carry their own AMOUNT tags): entries are now parsed per
+  ALLLEDGERENTRIES.LIST block with nested `*.LIST` sub-blocks stripped first.
+  Found when the reconciliation engine refused to match 45 obviously-identical
+  transactions during the first full-year live run (money-direction mismatch).
+
+### Added
+
+- Reconciliation matcher: a final **symmetric-group pass** pairs off leftovers
+  when both sides hold equal-sized sets of identical (date, amount, direction)
+  lines — e.g. two ₹400 government fees paid the same day — instead of
+  reporting both sides unmatched. Ref-sharing pairs are consumed first within
+  a group. With this and the amount-sign fix, the FY25-26 live run reconciles
+  **299/299 statement lines** against the Tally bank ledger.
+
 ## [1.9.1] - 2026-07-26
 
 ### Fixed
