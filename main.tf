@@ -86,10 +86,10 @@ resource "aws_s3_object" "vm_files" {
     for f in fileset("${path.module}/vm", "**") : f
     if !strcontains(f, "node_modules/") && !endswith(f, ".DS_Store")
   ])
-  bucket   = aws_s3_bucket.assets.id
-  key      = "vm/${each.value}"
-  source   = "${path.module}/vm/${each.value}"
-  etag     = filemd5("${path.module}/vm/${each.value}")
+  bucket = aws_s3_bucket.assets.id
+  key    = "vm/${each.value}"
+  source = "${path.module}/vm/${each.value}"
+  etag   = filemd5("${path.module}/vm/${each.value}")
 }
 
 # Public half of the generated key pair — repair.ps1 installs it as the
