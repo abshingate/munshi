@@ -1,7 +1,8 @@
 # Renders the info wallpaper and applies it for the current user.
-# Layout: a readable panel on the RIGHT side of the screen — desktop icons
-# stack on the left, so the two never overlap. -RenderOnly regenerates the
-# image without applying (used at boot by SYSTEM; user logons apply it).
+# Compact panel anchored TOP-RIGHT (desktop icons stack on the left), rendered
+# at the screen's actual resolution so it always fits — DCV resizes the display
+# to the browser window, so this varies. -RenderOnly regenerates the image
+# without applying (used at boot by SYSTEM; user logons apply it).
 param([switch]$RenderOnly)
 $ErrorActionPreference = "SilentlyContinue"
 Add-Type -AssemblyName System.Drawing
@@ -11,7 +12,7 @@ function Get-FileVer($path) {
 }
 
 $tallyVer = Get-FileVer "C:\Program Files\TallyPrime\tally.exe"
-$tally = if ($tallyVer) { "installed  ($tallyVer)" } else { "not installed yet - opens at login" }
+$tally = if ($tallyVer) { "installed ($tallyVer)" } else { "not installed - opens at login" }
 $chrome = Get-FileVer "C:\Program Files\Google\Chrome\Application\chrome.exe"; if (-not $chrome) { $chrome = "-" }
 $claude = & "C:\Program Files\nodejs\claude.cmd" --version 2>$null
 $claude = if ($claude) { ($claude -replace '\s*\(Claude Code\)', '') } else { "-" }
@@ -19,71 +20,79 @@ $java = "-"; if (Test-Path "C:\Program Files\Java") { $java = ((Get-ChildItem "C
 $dcvSvc = Get-Service dcvserver -ErrorAction SilentlyContinue
 $dcv = if ($dcvSvc -and $dcvSvc.Status -eq "Running") { "running" } else { "NOT RUNNING" }
 
-# (heading, rows) sections; rows are (label, value) pairs
 $sections = @(
     @{ h = "WHERE THINGS ARE"; rows = @(
-        @("Tally data - keep everything in", "C:\TallyData"),
+        @("Tally data", "C:\TallyData"),
         @("Installers", "C:\Installers"),
-        @("Logs and reports", "C:\HealthCheck")) },
+        @("Logs / reports", "C:\HealthCheck")) },
     @{ h = "SOFTWARE"; rows = @(
         @("TallyPrime", $tally),
-        @("Java 8 (32+64-bit)", $java),
+        @("Java 8 (32+64)", $java),
         @("Chrome", $chrome),
         @("Claude Code", $claude),
-        @("Browser desktop (DCV)", $dcv)) },
-    @{ h = "SOMETHING WRONG?  DO THIS, IN ORDER"; rows = @(
-        @("1.", "Double-click  Check System Health"),
-        @("2.", "Double-click  Repair This Computer"),
-        @("3.", "Open  Help and User Guide")) },
+        @("DCV desktop", $dcv)) },
+    @{ h = "SOMETHING WRONG?"; rows = @(
+        @("1.", "Check System Health  (desktop)"),
+        @("2.", "Repair This Computer (desktop)"),
+        @("3.", "Help and User Guide  (desktop)")) },
     @{ h = "GOOD TO KNOW"; rows = @(
-        @("*", "Switches itself OFF after ~1 hour idle"),
-        @("*", "Full backup every night at 2 AM - nothing is ever lost"),
-        @("*", "Govt portals: 'Govt Portals' folder on this desktop")) }
+        @("-", "Auto-OFF after ~1 hour idle"),
+        @("-", "Nightly 2 AM backup, nothing lost"),
+        @("-", "Portals: 'Govt Portals' folder")) }
 )
 
+# Use the real display size when running in a user session; sane default otherwise
 $w = 1920; $h = 1080
+try {
+    Add-Type -AssemblyName System.Windows.Forms
+    $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+    if ($b.Width -ge 800 -and $b.Height -ge 600) { $w = $b.Width; $h = $b.Height }
+} catch {}
+
 $bmp = New-Object System.Drawing.Bitmap $w, $h
 $g = [System.Drawing.Graphics]::FromImage($bmp)
 $g.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
 $g.TextRenderingHint = [System.Drawing.Text.TextRenderingHint]::ClearTypeGridFit
 
-# Background: deep navy, plain (keeps desktop icons on the left legible)
 $g.FillRectangle((New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(255, 20, 30, 46))), 0, 0, $w, $h)
 
-# Right-side panel
-$px = 850; $pw = 990; $py = 90; $ph = 880
-$panel = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(255, 30, 44, 66))
-$g.FillRectangle($panel, $px, $py, $pw, $ph)
-$gold = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(255, 240, 178, 50))
-$g.FillRectangle($gold, $px, $py, 8, $ph)
+# Compact top-right panel
+$pw = 640; $px = $w - $pw - 36; $py = 42
+$titleFont = New-Object System.Drawing.Font("Segoe UI", 19, [System.Drawing.FontStyle]::Bold)
+$headFont  = New-Object System.Drawing.Font("Segoe UI", 12, [System.Drawing.FontStyle]::Bold)
+$labelFont = New-Object System.Drawing.Font("Segoe UI", 11)
+$valueFont = New-Object System.Drawing.Font("Consolas", 11, [System.Drawing.FontStyle]::Bold)
+$smallFont = New-Object System.Drawing.Font("Segoe UI", 9)
+$rowH = 25; $headH = 30; $divH = 14
 
-$titleFont = New-Object System.Drawing.Font("Segoe UI", 30, [System.Drawing.FontStyle]::Bold)
-$headFont  = New-Object System.Drawing.Font("Segoe UI", 17, [System.Drawing.FontStyle]::Bold)
-$labelFont = New-Object System.Drawing.Font("Segoe UI", 16)
-$valueFont = New-Object System.Drawing.Font("Consolas", 16, [System.Drawing.FontStyle]::Bold)
-$smallFont = New-Object System.Drawing.Font("Segoe UI", 12)
+# Panel height computed from content so nothing is ever cut off
+$ph = 58 + 26
+foreach ($s in $sections) { $ph += $headH + ($s.rows.Count * $rowH) + $divH }
+
+$panel = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(255, 30, 44, 66))
+$gold  = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(255, 240, 178, 50))
 $white = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(255, 236, 241, 248))
 $grey  = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(255, 160, 175, 198))
 $line  = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(255, 55, 72, 98))
+$g.FillRectangle($panel, $px, $py, $pw, $ph)
+$g.FillRectangle($gold, $px, $py, 6, $ph)
 
-$x = $px + 42; $y = $py + 30
-$g.DrawString("TALLY CLOUD WORKSTATION", $titleFont, $gold, $x - 6, $y)
-$y += 74
+$x = $px + 28; $y = $py + 18
+$g.DrawString("TALLY CLOUD WORKSTATION", $titleFont, $gold, $x - 4, $y)
+$y += 52
 
 foreach ($s in $sections) {
-    $g.DrawString($s.h, $headFont, $gold, $x - 4, $y)
-    $y += 40
+    $g.DrawString($s.h, $headFont, $gold, $x - 2, $y)
+    $y += $headH
     foreach ($row in $s.rows) {
         $g.DrawString($row[0], $labelFont, $grey, $x, $y)
-        $g.DrawString($row[1], $valueFont, $white, $x + 330, $y)
-        $y += 34
+        $g.DrawString($row[1], $valueFont, $white, $x + 150, $y)
+        $y += $rowH
     }
-    $y += 10
-    $g.FillRectangle($line, $x - 4, $y, $pw - 80, 2)
-    $y += 20
+    $g.FillRectangle($line, $x - 2, $y + 3, $pw - 56, 1)
+    $y += $divH
 }
-
-$g.DrawString("Updated $(Get-Date -Format 'dd-MMM-yyyy HH:mm') IST  -  refreshes at every login", $smallFont, $grey, $x - 4, $py + $ph - 40)
+$g.DrawString("Updated $(Get-Date -Format 'dd-MMM HH:mm') - refreshes at login", $smallFont, $grey, $x - 2, $y - 4)
 
 $out = "C:\HealthCheck\wallpaper.bmp"
 $bmp.Save($out, [System.Drawing.Imaging.ImageFormat]::Bmp)
