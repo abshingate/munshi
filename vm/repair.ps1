@@ -115,6 +115,29 @@ else {
     } else { Report "FAILED" "TallyPrime installer (use the Download TallyPrime desktop shortcut)" }
 }
 
+# --- OpenSSH server (carries the DSC-token reverse tunnel) -------------------
+$sshd = Get-Service sshd -ErrorAction SilentlyContinue
+if ($sshd -and $sshd.Status -eq "Running") { Report "OK" "OpenSSH server" }
+else {
+    Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0 | Out-Null
+    Set-Service sshd -StartupType Automatic -ErrorAction SilentlyContinue
+    Start-Service sshd -ErrorAction SilentlyContinue
+    if ((Get-Service sshd -ErrorAction SilentlyContinue).Status -eq "Running") { Report "FIXED" "OpenSSH server" }
+    else { Report "FAILED" "OpenSSH server (DSC tunnel unavailable; RDP smart-card still works)" }
+}
+$akSrc = "C:\HealthCheck\vm\authorized_keys"
+$akDst = "C:\ProgramData\ssh\administrators_authorized_keys"
+if (Test-Path $akSrc) {
+    $current = ""; if (Test-Path $akDst) { $current = Get-Content $akDst -Raw }
+    $wanted = Get-Content $akSrc -Raw
+    if ($current.Trim() -eq $wanted.Trim()) { Report "OK" "SSH authorized key" }
+    else {
+        Copy-Item $akSrc $akDst -Force
+        icacls $akDst /inheritance:r /grant "Administrators:F" /grant "SYSTEM:F" | Out-Null
+        Report "FIXED" "SSH authorized key"
+    }
+} else { Report "FAILED" "SSH authorized key (missing from assets bucket)" }
+
 # --- VirtualHere client (DSC token over USB-over-IP) --------------------------
 $vh = "C:\Users\Public\Desktop\DSC Setup\VirtualHere Client.exe"
 if (Test-Path $vh) { Report "OK" "VirtualHere client" }

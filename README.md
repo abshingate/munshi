@@ -162,10 +162,13 @@ by what you connect from:
    appears on the remote machine automatically. This is standard practice for
    accountants using cloud VMs.
 2. **From a Mac / via the browser:** smart-card redirection is unreliable on
-   the Mac client and impossible in a browser tab, so use a USB-over-IP tool —
-   [VirtualHere](https://www.virtualhere.com/) (free for one device: server app
-   on your Mac, client on the remote machine) makes the token appear as if
-   plugged into the cloud machine.
+   the Mac client and impossible in a browser tab, so the token travels over
+   [VirtualHere](https://www.virtualhere.com/) USB-over-IP (server free for one
+   device) through an **SSH reverse tunnel** — button `6 - Share DSC Token`
+   automates it: VirtualHere server starts on the Mac, an SSH `-R` tunnel to
+   the VM's built-in OpenSSH server (installed by `repair.ps1`, port 22 open
+   only to your IP) carries port 7575, and the VM's VirtualHere client
+   connects to `localhost:7575`. Free — no EasyFind subscription needed.
 3. **Skip the DSC where the law allows:** GST and Income-tax accept
    Aadhaar-OTP e-verification (EVC) for proprietors and partnerships. A DSC is
    mainly mandatory for companies/LLPs (MCA filings) and some EPFO employer

@@ -105,15 +105,21 @@ hour of sitting idle, and emails you that it did.)
 Your DSC stays plugged into **your own computer at home** — not the cloud one.
 It gets "beamed" to the cloud computer:
 
+- **From this Mac (easiest):** plug in the token and double-click
+  **`6 - Share DSC Token`**. It starts everything and tells you the one
+  small step to do on the cloud computer the first time (add
+  `localhost:7575` in the VirtualHere Client, then right-click your token →
+  "Use this device"). Keep the window open while you sign; press Ctrl+C
+  in it when done.
 - **From a Windows laptop:** connect using the Remote Desktop app instead of
   the browser. Before connecting, in the app's settings turn on
   *Local Resources → Smart cards*. That's it — the portal will see your token.
-- **From a Mac:** use the VirtualHere app (one-time setup — ask whoever set
-  this system up for you, it takes 10 minutes; the steps are in the "DSC Setup"
-  folder on the cloud computer's desktop).
 - **Often you don't need the DSC at all:** GST and Income-tax accept an
   **OTP on your Aadhaar-linked mobile** instead, if your firm is a
   proprietorship or partnership. Companies and LLPs must use the DSC.
+
+Don't forget (first time only): install your token brand's driver on the
+cloud computer from its "DSC Setup" desktop folder.
 
 ## Is everything working? (health check + self-repair)
 

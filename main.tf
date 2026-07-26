@@ -87,6 +87,15 @@ resource "aws_s3_object" "vm_files" {
   etag     = filemd5("${path.module}/vm/${each.value}")
 }
 
+# Public half of the generated key pair — repair.ps1 installs it as the
+# SSH authorized key, enabling the DSC-token reverse tunnel from the owner's
+# machine (which holds the matching .pem).
+resource "aws_s3_object" "ssh_authorized_keys" {
+  bucket  = aws_s3_bucket.assets.id
+  key     = "vm/authorized_keys"
+  content = tls_private_key.this.public_key_openssh
+}
+
 # Always-current Windows Server 2022 AMI, resolved via AWS's public SSM parameter
 data "aws_ssm_parameter" "windows_ami" {
   name = "/aws/service/ami-windows-latest/Windows_Server-2022-English-Full-Base"
@@ -129,6 +138,14 @@ resource "aws_security_group" "this" {
     description = "Amazon DCV web client"
     from_port   = 8443
     to_port     = 8443
+    protocol    = "tcp"
+    cidr_blocks = [var.allowed_cidr]
+  }
+
+  ingress {
+    description = "SSH (reverse tunnel that carries the DSC token via VirtualHere)"
+    from_port   = 22
+    to_port     = 22
     protocol    = "tcp"
     cidr_blocks = [var.allowed_cidr]
   }
