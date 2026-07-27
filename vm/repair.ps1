@@ -173,6 +173,16 @@ if (Test-Path "C:\ProgramData\rclone\rclone.conf") {
     Report "OK" "Google Drive sync ready (one-time: run 'Set up Google Drive' on the desktop)"
 }
 
+# --- Secrets fences (matters once any non-admin user exists) ------------------
+# --- C:\TallyAI holds the AI app's API key/config; C:\TallyData\Backups holds
+# --- restore points. Neither is any standard user's business. Idempotent.
+foreach ($fence in @("C:\TallyAI", "C:\TallyData\Backups")) {
+    if (Test-Path $fence) {
+        icacls $fence /inheritance:r /grant "Administrators:(OI)(CI)F" /grant "SYSTEM:(OI)(CI)F" | Out-Null
+    }
+}
+Report "OK" "Secrets fences (C:\TallyAI and Backups readable by Administrators/SYSTEM only)"
+
 # --- Stable DNS hostname (optional; ADR-0018) ---------------------------------
 # --- When the deployment sets dns_hostname, vm/dns-config.json arrives with the
 # --- assets and the VM keeps that Route 53 A record pointed at its current IP.

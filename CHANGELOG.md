@@ -4,6 +4,19 @@ All notable changes to this project are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versioning: [SemVer](https://semver.org/).
 
+## [1.11.0] - 2026-07-27
+
+### Added
+
+- **Fenced additional users** (`scripts/add-vm-user.sh <Name> entry|review`):
+  one command creates a non-administrator RDP user for an accountant (Tally +
+  documents read/write) or an auditor (documents read-only; Tally opens with
+  display-only enforced via Tally's own security users, which also give the
+  Edit Log per-person attribution). repair.ps1 now fences `C:\TallyAI` (API
+  key/config) and `C:\TallyData\Backups` to Administrators/SYSTEM on every
+  converge. The multi-party network-access question is analysed and
+  deliberately deferred in ADR-0019.
+
 ## [1.10.0] - 2026-07-27
 
 ### Added
