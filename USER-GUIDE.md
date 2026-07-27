@@ -98,6 +98,12 @@ computer, not a public website. Click **Advanced → Proceed / Continue**.
 double-click **`2 - Get Password`** — it prints the password. (Save it in your
 phone's notes the first time; it never changes.)
 
+The same button also prints passwords for two ready-made helper accounts:
+**Accountant** (can work in Tally and documents) and **Auditor** (can only
+view). Give each password to the person doing that job — they connect with
+the Remote Desktop app, and they cannot change settings, see secrets, or
+touch backups.
+
 **Step 4 — Do your work.** Tally is on the desktop. Your GST, Income-tax,
 TRACES, EPFO, ESIC and MCA websites are in the **"Govt Portals"** folder on the
 desktop. Always keep your Tally company data in the **C:\TallyData** folder.

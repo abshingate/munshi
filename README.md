@@ -245,15 +245,18 @@ click in the desktop "DSC Setup" folder, first time only.
   simply always works. IAM access is scoped to that single zone; your existing
   website/email records are untouched; costs nothing (no Elastic IP). The
   health check verifies the name stays current. (ADR-0018)
-- **Multiple users**: one command creates a fenced, non-admin Windows user —
-  `./scripts/add-vm-user.sh Accountant entry` (read/write Tally + documents) or
-  `./scripts/add-vm-user.sh Auditor review` (documents read-only) — who
-  connects over RDP to the same machine. They can never read the AI app's API
-  key or touch backups (fenced automatically by repair). Add a matching named
+- **Three users out of the box**: every deployment gets `Administrator` (you),
+  **`Accountant`** (Tally + documents read/write) and **`Auditor`** (documents
+  read-only) — fenced non-admin users who connect over RDP; they can never read
+  the AI app's API key, touch backups or change the system. `scripts/
+  get-password.sh` (button `2`) prints all three passwords — share each role's
+  password with the person taking that role. Recreated and enforced at every
+  boot; disable with `create_default_users = false`. Extra users are your own
+  call: `./scripts/add-vm-user.sh <Name> entry|review`. Add a matching named
   user inside Tally (F1 → Security) and the Edit Log attributes every voucher
   to them by name. Their networks must be in the firewall allowlist — fine
   while the machine runs on-demand; for always-on/multi-party operation see
-  the analysed options in ADR-0019 (deliberately deferred).
+  ADR-0019 (deliberately deferred).
 - **Tally license** activates once and survives stop/start (same machine every time).
 - **Tally edition & MCA compliance**: the staged installer defaults to
   **TallyPrime Edit Log** (always-on audit trail — required for Pvt Ltd/Ltd

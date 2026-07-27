@@ -183,6 +183,38 @@ foreach ($fence in @("C:\TallyAI", "C:\TallyData\Backups")) {
 }
 Report "OK" "Secrets fences (C:\TallyAI and Backups readable by Administrators/SYSTEM only)"
 
+# --- Default fenced users (Accountant: entry, Auditor: review) -----------------
+# --- Delivered as vm/user-passwords.json by Terraform (create_default_users).
+# --- Converged every boot: recreated if deleted, passwords enforced, grants
+# --- reapplied. Additional users: scripts/add-vm-user.sh (operator's call).
+$upFile = "C:\HealthCheck\vm\user-passwords.json"
+if (Test-Path $upFile) {
+    icacls $upFile /inheritance:r /grant "Administrators:F" /grant "SYSTEM:F" | Out-Null
+    $made = @()
+    foreach ($u in (Get-Content $upFile -Raw | ConvertFrom-Json)) {
+        $sec = ConvertTo-SecureString $u.password -AsPlainText -Force
+        if (-not (Get-LocalUser -Name $u.name -ErrorAction SilentlyContinue)) {
+            New-LocalUser -Name $u.name -Password $sec -PasswordNeverExpires `
+                -Description "Fenced $($u.role) user (managed by repair)" | Out-Null
+            $made += $u.name
+        } else {
+            Set-LocalUser -Name $u.name -Password $sec
+        }
+        Add-LocalGroupMember -Group "Remote Desktop Users" -Member $u.name -ErrorAction SilentlyContinue
+        if ($u.role -eq "entry") {
+            icacls "C:\TallyData" /grant "$($u.name):(OI)(CI)M" | Out-Null
+        } else {
+            icacls "C:\TallyData" /grant "$($u.name):(OI)(CI)RX" | Out-Null
+            # Tally needs write inside company-data folders (numeric names) even
+            # to open a company; display-only is enforced via Tally security.
+            Get-ChildItem "C:\TallyData" -Directory | Where-Object { $_.Name -match "^[0-9]+$" } |
+                ForEach-Object { icacls $_.FullName /grant "$($u.name):(OI)(CI)M" | Out-Null }
+        }
+    }
+    if ($made.Count) { Report "FIXED" "Default users created: $($made -join ', ') (passwords: scripts/get-password.sh)" }
+    else { Report "OK" "Default users (Accountant, Auditor) converged" }
+} else { Report "OK" "Default users (not configured - create_default_users=false)" }
+
 # --- Stable DNS hostname (optional; ADR-0018) ---------------------------------
 # --- When the deployment sets dns_hostname, vm/dns-config.json arrives with the
 # --- assets and the VM keeps that Route 53 A record pointed at its current IP.

@@ -17,3 +17,17 @@ if [[ -z "$PW" ]]; then
 fi
 echo "User    : Administrator"
 echo "Password: $PW"
+
+# Default fenced users (Accountant/Auditor), if enabled — safe to share with
+# the person taking that role; they cannot touch system settings, API keys or
+# backups. See README "Multiple users".
+USERS_JSON=$(terraform output -json user_passwords 2>/dev/null || echo '{}')
+if [[ "$USERS_JSON" != "{}" && -n "$USERS_JSON" ]]; then
+  echo ""
+  echo "$USERS_JSON" | python3 -c '
+import json, sys
+for name, pw in sorted(json.load(sys.stdin).items()):
+    print(f"User    : {name}")
+    print(f"Password: {pw}")
+'
+fi

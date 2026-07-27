@@ -29,3 +29,9 @@ output "how_to_connect" {
     4. ./scripts/stop.sh when done         (or it auto-stops after ~1h idle)
   EOT
 }
+
+output "user_passwords" {
+  description = "Generated passwords for the default fenced users (Accountant, Auditor). Print with scripts/get-password.sh."
+  value       = { for name, _ in local.default_users : name => random_password.vm_user[name].result }
+  sensitive   = true
+}

@@ -83,3 +83,9 @@ variable "dns_zone" {
     error_message = "dns_hostname and dns_zone must be set together (or both left empty)."
   }
 }
+
+variable "create_default_users" {
+  description = "Create the default fenced, non-administrator RDP users at every converge: 'Accountant' (Tally + documents read/write) and 'Auditor' (documents read-only; Tally display-only is enforced via Tally's own security users). Their generated passwords are printed by scripts/get-password.sh. Additional users: scripts/add-vm-user.sh."
+  type        = bool
+  default     = true
+}

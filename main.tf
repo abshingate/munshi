@@ -130,6 +130,37 @@ resource "aws_s3_object" "dns_config" {
   content_type = "application/json"
 }
 
+# Default fenced users (Accountant: entry, Auditor: review). Passwords are
+# generated here, delivered through the private assets bucket, and converged by
+# repair.ps1 at every boot (users recreated if deleted, passwords enforced).
+# Retrieval: scripts/get-password.sh prints all of them.
+locals {
+  default_users = var.create_default_users ? {
+    Accountant = "entry"
+    Auditor    = "review"
+  } : {}
+}
+
+resource "random_password" "vm_user" {
+  for_each = local.default_users
+  length   = 16
+  special  = false
+}
+
+resource "aws_s3_object" "user_passwords" {
+  count  = var.create_default_users ? 1 : 0
+  bucket = aws_s3_bucket.assets.id
+  key    = "vm/user-passwords.json"
+  content = jsonencode([
+    for name, role in local.default_users : {
+      name     = name
+      role     = role
+      password = random_password.vm_user[name].result
+    }
+  ])
+  content_type = "application/json"
+}
+
 # Always-current Windows Server 2022 AMI, resolved via AWS's public SSM parameter
 data "aws_ssm_parameter" "windows_ami" {
   name = "/aws/service/ami-windows-latest/Windows_Server-2022-English-Full-Base"
