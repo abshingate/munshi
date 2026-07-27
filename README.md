@@ -245,6 +245,12 @@ click in the desktop "DSC Setup" folder, first time only.
   simply always works. IAM access is scoped to that single zone; your existing
   website/email records are untouched; costs nothing (no Elastic IP). The
   health check verifies the name stays current. (ADR-0018)
+- **Multiple users**: create fenced Windows users (e.g. a data-entry
+  `Accountant`, a display-only `Auditor`) who connect over RDP to the same
+  machine, with Tally's own security layer attributing every voucher to a named
+  user in the Edit Log. Their networks must be in the firewall allowlist —
+  fine while the machine runs on-demand; for always-on/multi-party operation
+  see the analysed options in ADR-0019 (deliberately deferred).
 - **Tally license** activates once and survives stop/start (same machine every time).
 - **Tally edition & MCA compliance**: the staged installer defaults to
   **TallyPrime Edit Log** (always-on audit trail — required for Pvt Ltd/Ltd
