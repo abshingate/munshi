@@ -52,6 +52,17 @@ auditor) or moving the machine to always-on operation. When triggered, the
 default direction is option 1 (self-hosted access page with per-user logins),
 with option 2 as the alternative if an even stronger posture is wanted.
 
+## Amendment (same day)
+
+A fourth, simpler option was added and adopted by the reference deployment:
+**`rdp_open_to_internet`** opens port 3389 to any network (project default
+remains `false`). Rationale: the machine is stopped when not in use (its
+strongest control), all accounts carry strong generated passwords, NLA is
+required, and repair enforces an account-lockout policy; the operator accepted
+the residual brute-force exposure in exchange for zero allowlist upkeep for
+staff. The browser desktop, AI app and SSH remain allowlist-only regardless.
+Options 1–3 remain the recommended path for always-on operation.
+
 ## Consequences
 
 - Today: additional users connect from allowlisted addresses only; adding or

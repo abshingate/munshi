@@ -191,12 +191,16 @@ resource "aws_security_group" "this" {
   description = "RDP and Amazon DCV access for ${var.name}"
   vpc_id      = aws_vpc.this.id
 
+  # RDP: allowlisted by default; optionally world-reachable for additional
+  # users connecting from unknown networks (rdp_open_to_internet — see the
+  # variable's description for the trade-off and mitigations).
+  #tfsec:ignore:aws-ec2-no-public-ingress-sgr
   ingress {
     description = "RDP"
     from_port   = 3389
     to_port     = 3389
     protocol    = "tcp"
-    cidr_blocks = [var.allowed_cidr]
+    cidr_blocks = var.rdp_open_to_internet ? ["0.0.0.0/0"] : [var.allowed_cidr]
   }
 
   ingress {

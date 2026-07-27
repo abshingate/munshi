@@ -183,6 +183,11 @@ foreach ($fence in @("C:\TallyAI", "C:\TallyData\Backups")) {
 }
 Report "OK" "Secrets fences (C:\TallyAI and Backups readable by Administrators/SYSTEM only)"
 
+# --- Brute-force hardening (always on; matters most if RDP is internet-open) --
+# --- 10 wrong passwords -> account locked 15 minutes. Applies to all accounts.
+net accounts /lockoutthreshold:10 /lockoutduration:15 /lockoutwindow:15 | Out-Null
+Report "OK" "Account lockout policy (10 attempts -> 15 min lock)"
+
 # --- Default fenced users (Accountant: entry, Auditor: review) -----------------
 # --- Delivered as vm/user-passwords.json by Terraform (create_default_users).
 # --- Converged every boot: recreated if deleted, passwords enforced, grants

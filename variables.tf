@@ -89,3 +89,9 @@ variable "create_default_users" {
   type        = bool
   default     = true
 }
+
+variable "rdp_open_to_internet" {
+  description = "DELIBERATE TRADE-OFF: open RDP (3389) to the whole internet so additional users (accountant/auditor) can connect from any network without allowlist upkeep. Internet-exposed RDP is heavily brute-forced; this project mitigates with strong generated passwords, Network Level Authentication and an account-lockout policy, and the machine is unreachable whenever stopped — but keeping this false and allowlisting per person (or using Fleet Manager) is safer. Browser desktop, AI app and SSH always remain allowlist-only regardless."
+  type        = bool
+  default     = false
+}
