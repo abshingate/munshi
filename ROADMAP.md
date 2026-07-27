@@ -109,7 +109,8 @@ record; the owner never has to open it.*
 - Tax-optimization hints: rebate thresholds, regime comparisons, timing
   ("₹11.92L vs ₹12.6L changes nothing; ₹12.4L would")
 - What-if scenarios: salary vs distribution, buy vs lease, capitalize vs expense
-- Draft notes-to-accounts and FS-adjustment summaries for the CA
+- Draft notes-to-accounts and FS-adjustment summaries for the CA (shipped:
+  Schedule III FS generator — `docs/fs-generator.md`)
 - Plain-language monthly letter: "what happened in your books this month"
 
 ## Pillar 8 — CA & auditor collaboration (the handoff, productised)

@@ -4,6 +4,23 @@ All notable changes to this project are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versioning: [SemVer](https://semver.org/).
 
+## [1.12.0] - 2026-07-27
+
+### Added
+
+- **Financial-statements generator** (`vm/app/lib/fsgen.js`, see
+  `docs/fs-generator.md`): produces complete Schedule III annual financial
+  statements — Balance Sheet, P&L, all notes, Companies Act depreciation
+  schedule, EPS, key ratios — directly from a ledger-level Tally trial
+  balance and a JSON company config (`vm/app/fs-config/example-config.json`).
+  Exact paise arithmetic until the presentation pass; generation is refused
+  while any validation fails (TB balance, unmapped ledgers, BS balance in
+  paise, depreciation ties, reserves continuity, independent P&L recompute,
+  related-party reconciliation); ₹'000 rounding-footing artefacts are
+  reported, never hidden. Validated by regenerating an audited year's signed
+  statements: 95/96 values exact, the one difference being a manual
+  adjustment in the auditor's workbook that the books did not contain.
+
 ## [1.11.0] - 2026-07-27
 
 ### Added

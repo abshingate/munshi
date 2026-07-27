@@ -1,0 +1,284 @@
+{
+ "_readme": "Example config for vm/app/lib/fsgen.js \u2014 see docs/fs-generator.md. All amounts in rupees.",
+ "company": {
+  "name": "Acme Widgets Private Limited",
+  "address": "1 Example Street, Pune 411001",
+  "incorporated": "2016-01-01"
+ },
+ "statement": {
+  "fyLabel": "2025-26",
+  "asAt": "March 31, 2026",
+  "prevAsAt": "March 31, 2025",
+  "rounding": "thousands"
+ },
+ "signing": {
+  "auditor": {
+   "firm": "XYZ & Associates",
+   "frn": "000000W",
+   "partner": "A Partner",
+   "membershipNo": "000000"
+  },
+  "directors": [
+   {
+    "name": "First Director",
+    "din": "00000001"
+   }
+  ],
+  "place": "Pune",
+  "date": "01-08-2026"
+ },
+ "shareCapital": {
+  "authorizedShares": 50000,
+  "faceValue": 10,
+  "issuedShares": 10000,
+  "shareholders": [
+   {
+    "name": "First Director",
+    "shares": 9999
+   },
+   {
+    "name": "Second Holder",
+    "shares": 1
+   }
+  ]
+ },
+ "shareCapitalTag": "Share Capital",
+ "reservesLedger": "Reserve & Surplus",
+ "reservesLedgerTag": "Reserves",
+ "depreciationExpenseTag": "Depreciation",
+ "priorFS": {},
+ "mapping": {
+  "Paid Up Share Capital": "Share Capital",
+  "Reserve & Surplus": "Reserves",
+  "PF Payable": "PF payable",
+  "Audit Fee Provision": "Provision for Expenses",
+  "Office Computer": "Fixed Assets",
+  "Accumulated Depn : Computers": "Fixed Assets",
+  "Bank Account": "Cash and Cash Equivalent",
+  "Sales": "Revenue",
+  "Salaries": "Employee benefit expenses",
+  "Depreciation": "Depreciation",
+  "Rent": "Rent"
+ },
+ "assetBlocks": [
+  {
+   "label": "Computers",
+   "ledgers": [
+    "Office Computer"
+   ],
+   "accDepLedger": "Accumulated Depn : Computers"
+  }
+ ],
+ "notes": [
+  {
+   "no": 6,
+   "title": "Trade payables",
+   "totalLabel": "Closing balance",
+   "lines": [
+    {
+     "key": "tpOthers",
+     "label": "Creditors other than micro and small enterprises",
+     "tags": [],
+     "sign": -1
+    }
+   ]
+  },
+  {
+   "no": 7,
+   "title": "Other current liabilities",
+   "totalLabel": "Closing balance",
+   "lines": [
+    {
+     "key": "pfPayable",
+     "label": "PF payable",
+     "tags": [
+      "PF payable"
+     ],
+     "sign": -1
+    }
+   ]
+  },
+  {
+   "no": 8,
+   "title": "Short-term provisions",
+   "totalLabel": "Closing balance",
+   "lines": [
+    {
+     "key": "provExpenses",
+     "label": "Provision for expenses",
+     "tags": [
+      "Provision for Expenses"
+     ],
+     "sign": -1
+    }
+   ]
+  },
+  {
+   "no": 9,
+   "title": "Non-Current Investments",
+   "totalLabel": "Closing balance",
+   "lines": []
+  },
+  {
+   "no": 11,
+   "title": "Long term loans & advances",
+   "totalLabel": "Closing balance",
+   "lines": []
+  },
+  {
+   "no": 12,
+   "title": "Other Non Current Assets",
+   "totalLabel": "Closing balance",
+   "lines": []
+  },
+  {
+   "no": 13,
+   "title": "Current Investments",
+   "totalLabel": "Closing balance",
+   "lines": []
+  },
+  {
+   "no": 14,
+   "title": "Trade receivables",
+   "totalLabel": "Closing balance",
+   "lines": []
+  },
+  {
+   "no": 15,
+   "title": "Cash and bank balances",
+   "totalLabel": "Closing balance",
+   "lines": [
+    {
+     "key": "cashCurrent",
+     "label": "In current accounts",
+     "tags": [
+      "Cash and Cash Equivalent"
+     ],
+     "sign": 1
+    }
+   ]
+  },
+  {
+   "no": 16,
+   "title": "Short term loans & advances",
+   "totalLabel": "Closing balance",
+   "lines": []
+  },
+  {
+   "no": 17,
+   "title": "Other Current Assets",
+   "totalLabel": "Closing balance",
+   "lines": []
+  },
+  {
+   "no": 18,
+   "title": "Revenue from operations",
+   "pl": true,
+   "lines": [
+    {
+     "key": "revenueOps",
+     "label": "Income from services provided",
+     "tags": [
+      "Revenue"
+     ],
+     "sign": -1
+    }
+   ]
+  },
+  {
+   "no": 19,
+   "title": "Other income",
+   "pl": true,
+   "lines": []
+  },
+  {
+   "no": 20,
+   "title": "Purchases",
+   "pl": true,
+   "lines": []
+  },
+  {
+   "no": 21,
+   "title": "Employee benefit expenses",
+   "pl": true,
+   "lines": [
+    {
+     "key": "salaries",
+     "label": "Salaries and wages",
+     "tags": [
+      "Employee benefit expenses"
+     ],
+     "sign": 1
+    }
+   ]
+  },
+  {
+   "no": 22,
+   "title": "Finance Costs",
+   "pl": true,
+   "lines": []
+  },
+  {
+   "no": 23,
+   "title": "Other expenses",
+   "pl": true,
+   "lines": [
+    {
+     "key": "rent",
+     "label": "Rent",
+     "tags": [
+      "Rent"
+     ],
+     "sign": 1
+    }
+   ]
+  },
+  {
+   "no": 24,
+   "title": "Prior Period Expenses",
+   "pl": true,
+   "lines": []
+  }
+ ],
+ "relatedParties": {
+  "kmp": [
+   "First Director \u2014 Director"
+  ],
+  "relatives": [],
+  "transactions": [
+   {
+    "label": "Salary \u2014 First Director",
+    "amount": 0,
+    "prevAmount": 0
+   }
+  ],
+  "validateAgainstTag": null,
+  "noteHtml": ""
+ },
+ "comparatives": {
+  "bs": {},
+  "pnl": {},
+  "eps": 0,
+  "reserves": {
+   "opening": 0,
+   "movement": 0,
+   "closing": 0
+  },
+  "ratios": {},
+  "notes": {}
+ },
+ "boilerplate": {
+  "front": [
+   {
+    "title": "Note 1 \u2014 Corporate information",
+    "html": "\u2026"
+   }
+  ],
+  "back": [
+   {
+    "title": "Note 30 \u2014 Contingent liability",
+    "html": "There are no contingent liabilities."
+   }
+  ]
+ }
+}
