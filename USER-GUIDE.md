@@ -84,6 +84,12 @@ A black window opens and after about 2 minutes it shows you an address like:
 exactly as shown. ⚠️ The address **changes every time** you turn the computer
 on — always use the one from the black window, not an old bookmark.
 
+*Optional: a permanent address.* If you own a domain whose DNS is on AWS
+Route 53, whoever manages your setup can set `dns_hostname` (for example
+`tally.yourcompany.com`) — after that the address **never changes**: the
+computer updates the name itself every time it starts. Bookmark
+`https://tally.yourcompany.com:8443` once and forget about IPs.
+
 Your browser will show a scary warning like *"Your connection is not private"*.
 **This is normal and safe** — it appears because this is your own private
 computer, not a public website. Click **Advanced → Proceed / Continue**.

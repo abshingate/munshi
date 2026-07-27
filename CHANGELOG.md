@@ -4,6 +4,16 @@ All notable changes to this project are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versioning: [SemVer](https://semver.org/).
 
+## [1.10.0] - 2026-07-27
+
+### Added
+
+- **Stable hostname (optional; ADR-0018):** set `dns_hostname` + `dns_zone` and
+  the VM keeps that Route 53 A record pointed at its current public IP — the
+  desktop, AI-app and RDP addresses never change again. Opt-in, zero cost,
+  scoped IAM (one zone only), config via the assets pipeline, converged by
+  repair, verified by the health check.
+
 ## [1.9.2] - 2026-07-26
 
 ### Fixed

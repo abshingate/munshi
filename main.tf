@@ -109,6 +109,27 @@ resource "aws_s3_object" "ssh_authorized_keys" {
   content = tls_private_key.this.public_key_openssh
 }
 
+# Optional stable hostname (see ADR-0018): the VM upserts <dns_hostname> in the
+# operator's existing Route 53 zone at every boot, so the user-facing address
+# never changes even though the public IP does. Config reaches the VM through
+# the same assets pipeline as everything else; IAM grants write access to the
+# one zone only. Disabled entirely when dns_hostname is left empty.
+data "aws_route53_zone" "workstation" {
+  count = var.dns_hostname != "" ? 1 : 0
+  name  = var.dns_zone
+}
+
+resource "aws_s3_object" "dns_config" {
+  count  = var.dns_hostname != "" ? 1 : 0
+  bucket = aws_s3_bucket.assets.id
+  key    = "vm/dns-config.json"
+  content = jsonencode({
+    hostname = var.dns_hostname
+    zone_id  = data.aws_route53_zone.workstation[0].zone_id
+  })
+  content_type = "application/json"
+}
+
 # Always-current Windows Server 2022 AMI, resolved via AWS's public SSM parameter
 data "aws_ssm_parameter" "windows_ami" {
   name = "/aws/service/ami-windows-latest/Windows_Server-2022-English-Full-Base"
@@ -247,6 +268,23 @@ resource "aws_iam_role_policy" "assets" {
         Effect   = "Allow"
         Action   = ["s3:ListBucket"]
         Resource = aws_s3_bucket.assets.arn
+      }
+    ]
+  })
+}
+
+# Write access to exactly one A record's zone — nothing else in Route 53.
+resource "aws_iam_role_policy" "dns_update" {
+  count = var.dns_hostname != "" ? 1 : 0
+  name  = "vm-dns-update"
+  role  = aws_iam_role.instance.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["route53:ChangeResourceRecordSets", "route53:ListResourceRecordSets"]
+        Resource = "arn:aws:route53:::hostedzone/${data.aws_route53_zone.workstation[0].zone_id}"
       }
     ]
   })

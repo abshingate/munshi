@@ -173,6 +173,21 @@ if (Test-Path "C:\ProgramData\rclone\rclone.conf") {
     Report "OK" "Google Drive sync ready (one-time: run 'Set up Google Drive' on the desktop)"
 }
 
+# --- Stable DNS hostname (optional; ADR-0018) ---------------------------------
+# --- When the deployment sets dns_hostname, vm/dns-config.json arrives with the
+# --- assets and the VM keeps that Route 53 A record pointed at its current IP.
+if (Test-Path "C:\HealthCheck\vm\dns-config.json") {
+    schtasks /Create /TN "TallyCloudDnsUpdate" /SC ONSTART /RU SYSTEM /RL HIGHEST /F `
+        /TR "powershell -NoProfile -ExecutionPolicy Bypass -File C:\HealthCheck\vm\update-dns.ps1" | Out-Null
+    powershell -NoProfile -ExecutionPolicy Bypass -File "C:\HealthCheck\vm\update-dns.ps1"
+    if ($LASTEXITCODE -eq 0) {
+        $dnsName = (Get-Content "C:\HealthCheck\vm\dns-config.json" -Raw | ConvertFrom-Json).hostname
+        Report "OK" "Stable DNS name ($dnsName updated to this machine's current IP)"
+    } else {
+        Report "FAILED" "Stable DNS name update (see C:\HealthCheck\dns-update.log)"
+    }
+} else { Report "OK" "Stable DNS name (not configured - set dns_hostname to enable)" }
+
 # --- VirtualHere client (DSC token over USB-over-IP) --------------------------
 $vh = "C:\Users\Public\Desktop\DSC Setup\VirtualHere Client.exe"
 if (Test-Path $vh) { Report "OK" "VirtualHere client" }

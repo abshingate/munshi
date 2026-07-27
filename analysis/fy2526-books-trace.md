@@ -183,3 +183,23 @@ FY26-27: the CloudFlare ₹15,362 was a 2-year registration of **aaiga.ai**.
    paid from an unknown account.
 2. The salary structure behind ₹99,350 vs remembered ₹1,05,000 gross.
 3. Everything else in the brief's §9 stands.
+
+## G. FY23-24 FS absorbed (26-Jul, from ~/Downloads/2. Exadatum Financials 2023-24.pdf)
+
+- **No director advance existed at 31-03-2024** (Note 19 nil; none at 31-03-2023
+  either) → the ₹1,19,000 opening advance **arose entirely within FY24-25**. The
+  evidence hunt for it is one year wide, not open-ended.
+- Salary history: FY23-24 ₹5,00,000 each (Note 26, Abhijit + Rupali); FY24-25
+  ₹12,00,000 each booked (per FY25-26 FS comparative; employee benefit 2,368);
+  FY25-26 ₹11,92,200 each booked. FY24-25 was paid irregularly in arrears
+  (e.g. "july sal" transfers of ₹56,783 paid 02-03-2025) — the ₹1.19L advance
+  most likely = payments to Abhijit exceeding the payable balance at points in
+  time (salary-timing excess), possibly plus unsubmitted reimbursements. ARTH's
+  FY24-25 ledger roll-forward will show which.
+- **Company owns the flat (investment property ₹3.83 Cr, Note 13/2.13; furniture
+  improvement ₹10,69,971 in FY23-24)** — confirms Amedeo was the COMPANY's
+  tenant. Rental income: FY22-23 ₹8.22L, FY23-24 ₹18.58L (≈160k/mo ✓), FY24-25
+  only ₹3.20L → consistent with Amedeo moving out ~May-2024 to the Mann/Sonal
+  flat that appears in his TDS workings; the "₹9.68L Apr–Sep-24 rent" in those
+  workings evidently spans both landlords. Softens (but keep asking) the
+  rental-income question to ARTH.

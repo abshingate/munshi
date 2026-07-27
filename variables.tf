@@ -66,3 +66,20 @@ variable "idle_cpu_threshold" {
   type        = number
   default     = 2
 }
+
+variable "dns_hostname" {
+  description = "Optional stable DNS name for the workstation (e.g. tally.example.com). The VM upserts this Route 53 A record with its current public IP at every boot, so the address never changes for users. Requires dns_zone. Empty string disables the feature."
+  type        = string
+  default     = ""
+}
+
+variable "dns_zone" {
+  description = "Route 53 hosted zone that dns_hostname belongs to (e.g. example.com). Must already exist in this AWS account; only a single A record for dns_hostname is ever touched, so an existing website/email on the domain is unaffected."
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = (var.dns_hostname == "") == (var.dns_zone == "")
+    error_message = "dns_hostname and dns_zone must be set together (or both left empty)."
+  }
+}

@@ -19,6 +19,15 @@ Check "Google Drive sync healthy"  {
     elseif (Test-Path "C:\TallyData\_DriveSyncStatus.txt") { -not (Select-String -Path "C:\TallyData\_DriveSyncStatus.txt" -Pattern "SYNC PROBLEM" -Quiet) }
     else { $true }
 } "see C:\TallyData\_DriveSyncStatus.txt; re-run 'Set up Google Drive' if it persists" -WarnOnly
+Check "Stable DNS name current"    {
+    if (-not (Test-Path "C:\HealthCheck\vm\dns-config.json")) { $true }   # feature off
+    else {
+        $cfg = Get-Content "C:\HealthCheck\vm\dns-config.json" -Raw | ConvertFrom-Json
+        $token = Invoke-RestMethod -Method PUT -Uri "http://169.254.169.254/latest/api/token" -Headers @{ "X-aws-ec2-metadata-token-ttl-seconds" = "60" } -TimeoutSec 5
+        $ip = Invoke-RestMethod -Uri "http://169.254.169.254/latest/meta-data/public-ipv4" -Headers @{ "X-aws-ec2-metadata-token" = $token } -TimeoutSec 5
+        (Resolve-DnsName -Name $cfg.hostname -Type A -Server 1.1.1.1 -ErrorAction Stop | Where-Object Type -eq "A").IPAddress -contains $ip
+    }
+} "run C:\HealthCheck\vm\update-dns.ps1 or 'Repair This Computer'; see C:\HealthCheck\dns-update.log" -WarnOnly
 Check "Java 64-bit installed"      { Test-Path "C:\Program Files\Java" } $fix
 Check "Java 32-bit installed"      { Test-Path "C:\Program Files (x86)\Java" } $fix
 Check "Claude Code installed"      { (& "C:\Program Files\nodejs\claude.cmd" --version 2>$null) -match "Claude" } $fix
