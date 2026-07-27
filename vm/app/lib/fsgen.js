@@ -43,6 +43,16 @@ function inGroup(n) {
   return (neg ? '(' : '') + rest + last3 + (neg ? ')' : '');
 }
 
+// one-decimal ₹'000 figure with Indian grouping (used where the statements
+// show paise-bearing thousands, e.g. related-party amounts): 1192.2 → 1,192.2
+function fmtK1(x) {
+  if (x === 0) return '-';
+  const neg = x < 0, a = Math.abs(x);
+  const whole = Math.floor(a), dec = Math.round((a - whole) * 10);
+  const w = dec === 10 ? whole + 1 : whole, d = dec === 10 ? 0 : dec;
+  return (neg ? '(' : '') + inGroup(w) + '.' + d + (neg ? ')' : '');
+}
+
 // ---------------------------------------------------------------- TB input
 
 // Parse the XML produced by a Tally gateway ledger collection with
@@ -435,8 +445,8 @@ function renderHTML(m, P) {
   <div class="fine">Key Management Personnel: ${c.relatedParties.kmp.map(esc).join('; ')}.<br>
   Relatives of KMP: ${c.relatedParties.relatives.map(esc).join('; ')}.</div>
   <table><tr><th>Particulars</th><th class="r">During ${esc(st.fyLabel)} (₹' 000)</th><th class="r">During prior year (₹' 000)</th><th class="r">Receivable as on ${esc(st.asAt)} (₹' 000)</th></tr>
-  ${P.rpt.transactions.map(t => `<tr><td>${esc(t.label)}</td><td class="r">${(t.amount / 1000).toFixed(1)}</td><td class="r">${fmtK(t.prevK)}</td><td class="r">${(t.receivable / 1000).toFixed(1)}</td></tr>`).join('')}
-  <tr class="tot"><td>Total</td><td class="r">${(m.rpt.totals.cur / 1000).toFixed(1)}</td><td class="r">${fmtK(P.rpt.totals.prev)}</td><td class="r">${(m.rpt.totals.recv / 1000).toFixed(1)}</td></tr></table>
+  ${P.rpt.transactions.map(t => `<tr><td>${esc(t.label)}</td><td class="r">${fmtK1(t.amount / 1000)}</td><td class="r">${fmtK(t.prevK)}</td><td class="r">${fmtK1(t.receivable / 1000)}</td></tr>`).join('')}
+  <tr class="tot"><td>Total</td><td class="r">${fmtK1(m.rpt.totals.cur / 1000)}</td><td class="r">${fmtK(P.rpt.totals.prev)}</td><td class="r">${fmtK1(m.rpt.totals.recv / 1000)}</td></tr></table>
   <div class="fine">${c.relatedParties.noteHtml || ''}</div>
   <div class="note-title">Note 28 — Earnings per share (AS-20)</div>
   <table><tr><th></th><th class="r">${esc(st.fyLabel)}</th><th class="r">Prior year</th></tr>
