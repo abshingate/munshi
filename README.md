@@ -250,7 +250,8 @@ click in the desktop "DSC Setup" folder, first time only.
   read-only) — fenced non-admin users who connect over RDP; they can never read
   the AI app's API key, touch backups or change the system. `scripts/
   get-password.sh` (button `2`) prints all three passwords — share each role's
-  password with the person taking that role. Recreated and enforced at every
+  password with the person taking that role, along with **RDP-USERS-GUIDE.md**
+  (a fill-in-and-share connection guide for their Mac/Windows). Recreated and enforced at every
   boot; disable with `create_default_users = false`. Extra users are your own
   call: `./scripts/add-vm-user.sh <Name> entry|review`. Add a matching named
   user inside Tally (F1 → Security) and the Edit Log attributes every voucher

@@ -102,7 +102,8 @@ The same button also prints passwords for two ready-made helper accounts:
 **Accountant** (can work in Tally and documents) and **Auditor** (can only
 view). Give each password to the person doing that job — they connect with
 the Remote Desktop app, and they cannot change settings, see secrets, or
-touch backups.
+touch backups. There's a ready-made guide to send them: **RDP-USERS-GUIDE.md**
+in this folder (fill in the address and your name, share as PDF or text).
 
 **Step 4 — Do your work.** Tally is on the desktop. Your GST, Income-tax,
 TRACES, EPFO, ESIC and MCA websites are in the **"Govt Portals"** folder on the
