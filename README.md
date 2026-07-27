@@ -42,6 +42,7 @@ flowchart LR
 |---|---|
 | Machine | Windows Server 2022, t3.large (2 vCPU / 8 GB), 100 GB encrypted disk, Mumbai (`ap-south-1`) |
 | Access | **Browser** via Amazon DCV (`https://<ip>:8443`), or RDP, or AWS Console → Fleet Manager |
+| Stable address (optional) | Own a domain on Route 53? Set `dns_hostname = "tally.example.com"` and the VM updates that DNS record itself at every boot — one permanent address for the desktop, the AI app and RDP, no Elastic IP needed (ADR-0018) |
 | Pre-installed | Chrome, Adobe Reader, 7-Zip, Notepad++, **Java 8 (32-bit + 64-bit — required by GST emSigner / TRACES WebSigner)**, **Google Drive sync** (via rclone — the official client doesn't support Windows Server, ADR-0015; one-time sign-in button, then `C:\TallyData\Drive` ↔ your Drive's `TallyCloud` folder every 5 min), Amazon DCV, IST timezone, desktop shortcuts for GST / Income-tax / TRACES / EPFO / ESIC / MCA portals and DSC utilities |
 | Data safety | Disk persists across stop/start · daily snapshots (14 kept) · termination protection on |
 | Cost safety | Auto-stops after ~1 hour of idle CPU, so forgetting it never costs a full month |
@@ -236,6 +237,14 @@ click in the desktop "DSC Setup" folder, first time only.
 - **Never** run `terraform destroy` casually — it is the one command that deletes
   the machine and its disk. Termination protection also blocks accidental
   console/API terminations; snapshots survive even a destroy.
+- **Tired of the IP changing every start?** If your domain's DNS is hosted on
+  AWS Route 53, set two variables in `terraform.tfvars`:
+  `dns_hostname = "tally.yourdomain.com"` and `dns_zone = "yourdomain.com"`,
+  then `terraform apply`. The VM upserts that one A record with its current IP
+  at every boot (and every repair), so `https://tally.yourdomain.com:8443`
+  simply always works. IAM access is scoped to that single zone; your existing
+  website/email records are untouched; costs nothing (no Elastic IP). The
+  health check verifies the name stays current. (ADR-0018)
 - **Tally license** activates once and survives stop/start (same machine every time).
 - **Tally edition & MCA compliance**: the staged installer defaults to
   **TallyPrime Edit Log** (always-on audit trail — required for Pvt Ltd/Ltd

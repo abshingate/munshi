@@ -8,6 +8,15 @@ allowed_cidr = "1.2.3.4/32"
 # REQUIRED for Pvt Ltd / Ltd companies under MCA rules; safe default).
 # Proprietorships/partnerships may set "standard".
 # tally_edition           = "editlog"
+#
+# Stable address (recommended if you own a domain with DNS on AWS Route 53):
+# the VM keeps this A record pointed at its current IP on every boot, so
+# https://tally.example.com:8443 works forever — no more changing IPs.
+# Your website/email on the domain are unaffected (only this one record is
+# touched). See ADR-0018.
+# dns_hostname            = "tally.example.com"
+# dns_zone                = "example.com"
+#
 # name                    = "tally-workstation"
 # region                  = "ap-south-1"
 # instance_type           = "t3.large"

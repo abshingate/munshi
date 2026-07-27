@@ -86,6 +86,13 @@ The `TallyCloudRepair` scheduled task runs `update-and-repair.ps1`:
 re-sync `vm/*` from S3, then run `repair.ps1`. So a VM that missed an update
 or suffered a failed download converges on next start — no human needed.
 
+When the deployment sets `dns_hostname` (ADR-0018), a second ONSTART task —
+`TallyCloudDnsUpdate`, registered by `repair.ps1` — runs `update-dns.ps1`:
+read `vm/dns-config.json` (delivered via the assets bucket), fetch the current
+public IP from instance metadata, and upsert the operator's Route 53 A record
+(TTL 60). The instance role's write access is scoped to that single hosted
+zone; the health check verifies the name resolves to the machine's actual IP.
+
 ### Pushing a change to a live VM
 
 1. Edit a file in `vm/`.
