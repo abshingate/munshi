@@ -1,6 +1,6 @@
-# Tally Cloud Workstation
+# Munshi (मुंशी) — the cloud accounting workstation
 
-[![CI](https://github.com/abshingate/tally-cloud-workstation/actions/workflows/ci.yml/badge.svg)](https://github.com/abshingate/tally-cloud-workstation/actions/workflows/ci.yml)
+[![CI](https://github.com/abshingate/munshi/actions/workflows/ci.yml/badge.svg)](https://github.com/abshingate/munshi/actions/workflows/ci.yml)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Terraform](https://img.shields.io/badge/Terraform-%E2%89%A51.5-844FBA?logo=terraform&logoColor=white)](https://developer.hashicorp.com/terraform)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
@@ -321,7 +321,7 @@ see [SECURITY.md](SECURITY.md).
 
 ## License
 
-Copyright 2026 Tally Cloud Workstation contributors.
+Copyright 2026 Munshi contributors.
 Licensed under the [Apache License 2.0](LICENSE).
 
 TallyPrime is a product of Tally Solutions Pvt. Ltd.; this project is not

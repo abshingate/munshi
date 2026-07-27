@@ -1,4 +1,4 @@
-# Contributing to Tally Cloud Workstation
+# Contributing to Munshi
 
 Thank you for considering a contribution! This project's goal is simple:
 **a non-technical accountant must be able to use the result.** Every change is
@@ -23,8 +23,8 @@ those invariants.
 ## Development setup
 
 ```bash
-git clone https://github.com/abshingate/tally-cloud-workstation.git
-cd tally-cloud-workstation
+git clone https://github.com/abshingate/munshi.git
+cd munshi
 terraform init -backend=false
 ```
 

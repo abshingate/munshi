@@ -8,7 +8,7 @@ The `main` branch and the latest release are supported with security fixes.
 
 Please **do not** open a public issue for security problems.
 
-- Preferred: [open a private security advisory](https://github.com/abshingate/tally-cloud-workstation/security/advisories/new)
+- Preferred: [open a private security advisory](https://github.com/abshingate/munshi/security/advisories/new)
 - Or email: abshingate@exadatum.com
 
 You can expect an acknowledgement within a few days. Please include

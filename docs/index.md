@@ -1,11 +1,11 @@
-# Tally Cloud Workstation
+# Munshi (मुंशी) — the cloud accounting workstation
 
 **An on-demand Windows computer on AWS for Indian accounting and compliance —
 TallyPrime, GST, TDS, PF, ESIC, MCA — that costs almost nothing while switched
 off, loses nothing between sessions, and can be operated by someone with zero
 technical knowledge.**
 
-[Get the code on GitHub](https://github.com/abshingate/tally-cloud-workstation){: .btn }
+[Get the code on GitHub](https://github.com/abshingate/munshi){: .btn }
 
 ## Why this exists
 
@@ -33,14 +33,14 @@ VM) costs real money the other 28 days. This project gives you:
 
 ## Documentation
 
-- [README](https://github.com/abshingate/tally-cloud-workstation#readme) —
+- [README](https://github.com/abshingate/munshi#readme) —
   architecture, deployment, operations (for the technical person)
-- [User Guide](https://github.com/abshingate/tally-cloud-workstation/blob/main/USER-GUIDE.md) —
+- [User Guide](https://github.com/abshingate/munshi/blob/main/USER-GUIDE.md) —
   plain-language manual (for the accountant)
-- [Contributing](https://github.com/abshingate/tally-cloud-workstation/blob/main/CONTRIBUTING.md) ·
-  [Security policy](https://github.com/abshingate/tally-cloud-workstation/blob/main/SECURITY.md) ·
-  [Changelog](https://github.com/abshingate/tally-cloud-workstation/blob/main/CHANGELOG.md)
+- [Contributing](https://github.com/abshingate/munshi/blob/main/CONTRIBUTING.md) ·
+  [Security policy](https://github.com/abshingate/munshi/blob/main/SECURITY.md) ·
+  [Changelog](https://github.com/abshingate/munshi/blob/main/CHANGELOG.md)
 
 ## License
 
-Open source under the [Apache License 2.0](https://github.com/abshingate/tally-cloud-workstation/blob/main/LICENSE).
+Open source under the [Apache License 2.0](https://github.com/abshingate/munshi/blob/main/LICENSE).
