@@ -312,6 +312,13 @@ never contains anything account-specific or secret.
 | Daily snapshots | < $1/month |
 | **Total** | **~$10–12/month** |
 
+## Where this is going
+
+Munshi's ambition is an AI accountant an SME never has to think about — see
+**[ROADMAP.md](ROADMAP.md)**: twelve pillars, from WhatsApp bill capture and
+auto-reconciliation rituals to a one-click CA Pack and a Books Health Score,
+every item traced to a real pain we've lived while building it.
+
 ## Contributing
 
 Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). Please
