@@ -33,3 +33,6 @@ never delete or rewrite history, add a new record).
 | [0015](0015-google-drive-via-rclone.md) | Google Drive sync via rclone (official client unsupported on Windows Server) | accepted |
 | [0016](0016-bank-date-reconciliation-exception.md) | Narrow alteration exception: bank-date tick for reconciliation (amends 0011) | accepted |
 | [0017](0017-reconciliation-architecture.md) | Reconciliation: code matches, LLM extracts, alterations fingerprint-verified | accepted |
+| [0018](0018-stable-hostname-route53.md) | Stable hostname via Route 53 so the address survives restarts | accepted |
+| [0019](0019-multi-user-remote-access-deferred.md) | Multi-user remote access deferred | accepted |
+| [0020](0020-knowledge-base-postgres-pgvector.md) | Document knowledge base on PostgreSQL + pgvector, ingested from user-run exports | accepted |

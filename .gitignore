@@ -10,3 +10,7 @@ terraform.tfvars
 local/
 vm/app/node_modules/
 vm/app/package-lock.json
+
+# Python
+__pycache__/
+*.py[cod]

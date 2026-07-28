@@ -62,3 +62,18 @@ jobs:
       - uses: aquasecurity/tfsec-action@v1.0.3
         with:
           github_token: ${{ github.token }}
+
+  knowledge-base:
+    name: Knowledge base (unit tests)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # No database and no driver installed on purpose: the ingestion module
+      # must stay importable and its pure functions testable without either.
+      - name: Run ingestion tests
+        run: python vm/kb/test_ingest.py
+      - name: Byte-compile pipeline
+        run: python -m compileall -q vm/kb/ingest.py vm/kb/search.py
