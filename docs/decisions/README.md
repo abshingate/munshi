@@ -36,3 +36,4 @@ never delete or rewrite history, add a new record).
 | [0018](0018-stable-hostname-route53.md) | Stable hostname via Route 53 so the address survives restarts | accepted |
 | [0019](0019-multi-user-remote-access-deferred.md) | Multi-user remote access deferred | accepted |
 | [0020](0020-knowledge-base-postgres-pgvector.md) | Document knowledge base on PostgreSQL + pgvector, ingested from user-run exports | accepted |
+| [0021](0021-assisted-form-filling.md) | Assisted form filling: assistant drives the browser, human approves every submit | proposed |
