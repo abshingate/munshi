@@ -4,6 +4,37 @@ All notable changes to this project are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versioning: [SemVer](https://semver.org/).
 
+## [1.14.0] - 2026-07-28
+
+### Added
+
+- **Company history layer** (`vm/kb/migrations/003_company_history.sql`):
+  extends the knowledge base from "find the document" to "what happened in
+  this business, and do the books agree with the bank?".
+  - `bank_transaction` — evidence: what the bank says moved, raw narration
+    preserved, idempotent on a row hash.
+  - `tally_voucher` / `tally_entry` / `tally_ledger` — assertion: what the
+    books claim.
+  - `recon_match` — where the two meet **or fail to**. A bank-only row is a
+    missing book entry; a books-only row is an accrual or an error. The
+    exceptions are the product, not a by-product.
+  - `finding` — durable record of verification results with evidence and
+    status.
+  - `coverage` — what evidence exists per financial year. Queried *before*
+    answering, so the assistant can say "no data for FY 2016-17" rather than
+    answering confidently from nothing.
+  - `fin_year` — explicit financial-year calendar (the boundary is
+    jurisdiction-specific and every query needs it).
+  - Views `v_unmatched_bank` (money moved with no voucher) and
+    `v_party_activity` (everything known about a counterparty).
+
+### Notes
+
+- Documents answer "find X"; transactions answer "how much, when, and does
+  it reconcile?". Both live in one database precisely so they can be joined —
+  the reason for choosing PostgreSQL over a document or vector store alone
+  (ADR-0020).
+
 ## [1.13.0] - 2026-07-28
 
 ### Added
