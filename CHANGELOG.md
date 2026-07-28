@@ -44,6 +44,33 @@ versioning: [SemVer](https://semver.org/).
   live mail sync would require OAuth, a running poller and an always-on VM,
   each contradicting the stopped-by-default cost model (ADR-0001).
 
+### Fixed
+
+- Document classification ignored filenames containing `_` or `-`: `re`
+  treats them as word characters, so `\bchallan\b` did not match
+  `2026-05-07_challan.pdf` — precisely the naming convention ADR-0012
+  prescribes. Scanned documents, which often yield no extractable text, were
+  therefore left unclassified and invisible to type filters. Separators are
+  now normalised before matching and the filename is searched before the
+  body. Measured on a real corpus of 291 documents: unclassified fell from
+  165 to 131, invoices rose from 85 to 118.
+
+### Testing
+
+- `vm/kb/test_ingest.py`: 24 unit tests over the ingestion logic most likely
+  to corrupt the index silently — control-character stripping, chunk
+  boundaries and content preservation, hash idempotency, amount extraction,
+  document classification. Runs with no database and no driver, so it works
+  in CI and on a contributor's machine.
+- `ingest.py` and `search.py` no longer exit at import when `psycopg` is
+  absent; the driver is required only when a connection is actually opened.
+- CI job `knowledge-base` runs the tests and byte-compiles the pipeline.
+- `vm/health-check.ps1` gained seven knowledge-base checks (PostgreSQL
+  installed, database responds, schema present, search works end-to-end,
+  index populated, semantic search available, Python pipeline importable).
+  Verified by negative test: stopping PostgreSQL produces three FAILs with
+  actionable hints and exit code 1; restarting restores all PASS.
+
 ## [1.12.0] - 2026-07-27
 
 ### Added

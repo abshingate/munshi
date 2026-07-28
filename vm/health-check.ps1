@@ -40,6 +40,50 @@ Check "Disk free space > 15 GB"    { (Get-PSDrive C).Free -gt 15GB } "raise volu
 Check "Internet: GST portal"       { (Test-NetConnection www.gst.gov.in -Port 443 -WarningAction SilentlyContinue).TcpTestSucceeded } "check security group egress / AWS networking"
 Check "Internet: Income-tax portal" { (Test-NetConnection www.incometax.gov.in -Port 443 -WarningAction SilentlyContinue).TcpTestSucceeded } "check security group egress / AWS networking"
 Check "TallyPrime installed"       { Test-Path "C:\Program Files\TallyPrime\tally.exe" } "one-time step: run TallyPrimeSetup (auto-opens at first login); Repair restages the installer if missing" -WarnOnly
+
+# --- Knowledge base (ADR-0020) ----------------------------------------------
+# Optional component: absent is a WARN, broken-when-present is a FAIL. Tests
+# behaviour (can we query?) rather than file presence, per ADR-0006.
+$kbPg  = Get-ChildItem "C:\Program Files\PostgreSQL\*\bin\psql.exe" -ErrorAction SilentlyContinue |
+         Sort-Object { [int]($_.Directory.Parent.Name) } -Descending | Select-Object -First 1
+$kbPwd = [Environment]::GetEnvironmentVariable("MUNSHI_KB_PASSWORD", "Machine")
+function Invoke-Kb($sql) {
+    if (-not $kbPg -or -not $kbPwd) { return $null }
+    $env:PGPASSWORD = $kbPwd
+    & $kbPg.FullName -U postgres -h 127.0.0.1 -d munshi_kb -tAc $sql 2>$null
+}
+
+Check "Knowledge base: PostgreSQL installed" { $null -ne $kbPg } "optional; run 'Repair This Computer' to install (ADR-0020)" -WarnOnly
+Check "Knowledge base: database responds" {
+    if (-not $kbPg) { $true }                      # not installed: covered by the WARN above
+    else { (Invoke-Kb "SELECT 1") -match "1" }
+} "PostgreSQL is installed but not answering: Start-Service postgresql*, then $fix"
+Check "Knowledge base: schema present" {
+    if (-not $kbPg) { $true }
+    else { (Invoke-Kb "SELECT count(*) FROM kb_schema_version") -match "[1-9]" }
+} "migrations have not run: $fix (see C:\HealthCheck\vm\kb\migrations)"
+Check "Knowledge base: search works" {
+    if (-not $kbPg) { $true }
+    else {
+        # End-to-end behaviour test: the full-text path must actually return.
+        $null -ne (Invoke-Kb "SELECT count(*) FROM kb_document WHERE tsv @@ plainto_tsquery('english','tax')")
+    }
+} "full-text search failing; check the FTS triggers in migration 001"
+Check "Knowledge base: has documents" {
+    if (-not $kbPg) { $true }
+    else { (Invoke-Kb "SELECT count(*) FROM kb_document") -match "[1-9]" }
+} "empty index: run 'python C:\HealthCheck\vm\kb\ingest.py --source filesystem --path C:\TallyData\Documents'" -WarnOnly
+Check "Knowledge base: semantic search" {
+    if (-not $kbPg) { $true }
+    else { (Invoke-Kb "SELECT count(*) FROM information_schema.columns WHERE table_name='kb_chunk' AND column_name='embedding'") -match "1" }
+} "pgvector not installed - SQL and full-text search still work; see vm/kb/README.md to enable" -WarnOnly
+Check "Knowledge base: Python pipeline" {
+    $py = @(Get-Command python.exe -ErrorAction SilentlyContinue | ForEach-Object { $_.Source }) +
+          @(Get-ChildItem "C:\Python3*\python.exe" -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName }) |
+          Where-Object { $_ } | Sort-Object -Descending | Select-Object -First 1
+    if (-not $py) { $false }
+    else { (& $py -c "import psycopg, pypdf, docx, openpyxl, bs4; print('ok')" 2>$null) -match "ok" }
+} "ingestion unavailable: $fix (installs Python + packages)" -WarnOnly
 $report = ($r | Out-String).Trim()
 $report | Tee-Object "C:\HealthCheck\last-report.txt"
 if ($script:fails -gt 0) { Write-Output "`nRESULT: $($script:fails) ISSUE(S) FOUND - see FAIL lines above" ; exit 1 }

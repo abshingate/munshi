@@ -25,7 +25,7 @@ import sys
 try:
     import psycopg
 except ImportError:
-    sys.exit("psycopg not installed. Run: pip install 'psycopg[binary]'")
+    psycopg = None
 
 DB = os.environ.get("MUNSHI_KB_DSN", "postgresql://postgres@localhost/munshi_kb")
 
@@ -127,6 +127,9 @@ def main():
     ap.add_argument("--sql", help="read-only SELECT for aggregates")
     ap.add_argument("--json", action="store_true", help="machine-readable output")
     args = ap.parse_args()
+
+    if psycopg is None:
+        sys.exit("psycopg not installed. Run: pip install 'psycopg[binary]'")
 
     with psycopg.connect(DB) as conn:
         if args.doc:

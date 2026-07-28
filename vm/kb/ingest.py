@@ -31,10 +31,19 @@ import sys
 from datetime import datetime, date
 from pathlib import Path
 
+# psycopg is required to talk to the database, but NOT to import this module:
+# the text-extraction and chunking functions are pure and must stay testable
+# (and reusable) on a machine with no driver installed. Failing here would
+# also break CI, where there is no PostgreSQL.
 try:
     import psycopg
 except ImportError:
-    sys.exit("psycopg not installed. Run: pip install 'psycopg[binary]'")
+    psycopg = None
+
+
+def require_psycopg():
+    if psycopg is None:
+        sys.exit("psycopg not installed. Run: pip install 'psycopg[binary]'")
 
 DB = os.environ.get("MUNSHI_KB_DSN", "postgresql://postgres@localhost/munshi_kb")
 
@@ -164,19 +173,36 @@ def guess_amount(text):
     return max(vals) if vals else None
 
 
+# Order matters: the FIRST match wins, so specific patterns must precede
+# general ones. 'challan' outranks 'return' because a challan receipt often
+# says "returns" in boilerplate, and scanned challans carry the word only in
+# their filename.
 DOC_TYPE_HINTS = [
-    ("invoice", r"\b(tax\s+invoice|invoice\s*(no|#))"),
-    ("bank-statement", r"\b(statement of account|account statement|detailed statement)\b"),
     ("challan", r"\bchallan\b"),
-    ("return", r"\b(return|acknowledg)"),
+    ("invoice", r"\b(tax\s+invoice|invoice\s*(no|#)|invoice)\b"),
+    ("bank-statement", r"\b(statement of account|account statement|detailed statement|bank statement)\b"),
+    ("return", r"\b(acknowledg|form\s*(16|26q|24q|140|138)|itr[-\s]?\d)\b"),
     ("contract", r"\b(agreement|licence|license|contract)\b"),
 ]
 
 
 def guess_doc_type(filename, text):
-    blob = f"{filename}\n{(text or '')[:5000]}".lower()
+    """Best-effort classification from filename and leading text.
+
+    Scanned documents often yield no text at all, so the filename must be able
+    to classify on its own — that is why it is searched first and in full.
+    """
+    # Underscores and hyphens are word characters to `re`, so "\bchallan\b"
+    # does NOT match "2026-05-07_challan.pdf". Filing conventions are full of
+    # them (ADR-0012 names files date_label_marker), so normalise separators
+    # to spaces before matching.
+    name = re.sub(r"[_\-.]+", " ", (filename or "")).lower()
+    body = (text or "")[:5000].lower()
     for label, pattern in DOC_TYPE_HINTS:
-        if re.search(pattern, blob, re.I):
+        if re.search(pattern, name, re.I):
+            return label
+    for label, pattern in DOC_TYPE_HINTS:
+        if re.search(pattern, body, re.I):
             return label
     return None
 
@@ -212,6 +238,7 @@ def chunk_text(text, size=1500, overlap=200):
 # ---------------------------------------------------------------------------
 
 def connect():
+    require_psycopg()
     return psycopg.connect(DB)
 
 
