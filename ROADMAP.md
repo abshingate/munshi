@@ -18,6 +18,12 @@ record; the owner never has to open it.*
 5. **Your machine, your books.** Self-hosted first; nothing leaves the
    deployment that the owner didn't send.
 
+**What this does and does not promise:**
+[docs/compliance-safety-net.md](docs/compliance-safety-net.md) sets out
+honestly which mistakes the system catches, which always need a human, and
+in what order to build the net. Written from a real day's findings, not from
+aspiration.
+
 ---
 
 ## Pillar 1 — Capture: every rupee's paperwork arrives by itself
