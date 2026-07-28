@@ -296,6 +296,17 @@ if (Test-Path "$appSrc\server.js") {
     Report "FAILED" "AI Accountant app files missing from assets sync"
 }
 
+# --- Knowledge base (ADR-0020) ----------------------------------------------
+# Optional component: a PostgreSQL + pgvector index over the company's
+# documents. Failures here must never break the rest of the machine, so it
+# runs in its own scope and its exit status is advisory.
+$kbSetup = Join-Path $PSScriptRoot "kb-setup.ps1"
+if (Test-Path $kbSetup) {
+    try { & $kbSetup } catch { Report "WARN" "Knowledge base setup skipped ($($_.Exception.Message))" }
+} else {
+    Report "WARN" "kb-setup.ps1 missing from assets sync (knowledge base unavailable)"
+}
+
 Write-Output ""
 if ($script:fails -gt 0) {
     Write-Output "REPAIR RESULT: $($script:fails) component(s) still broken - will retry at next boot, or double-click Repair This Computer after checking the internet connection."

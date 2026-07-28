@@ -4,6 +4,46 @@ All notable changes to this project are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versioning: [SemVer](https://semver.org/).
 
+## [1.13.0] - 2026-07-28
+
+### Added
+
+- **Document knowledge base** (`vm/kb/`, see
+  [ADR-0020](docs/decisions/0020-knowledge-base-postgres-pgvector.md)): a
+  searchable index of a company's documents and correspondence, so questions
+  like "what did we pay this vendor over four years, and was tax deducted?"
+  are one query instead of an afternoon across Gmail, Drive, Tally and a
+  folder of PDFs. PostgreSQL holds structured columns, full-text search and
+  (optionally) vector embeddings in one place, so filters and relevance
+  ranking compose in a single statement.
+  - `migrations/` — numbered, idempotent SQL tracked in `kb_schema_version`.
+  - `ingest.py` — parses Google Takeout mbox (messages **and** attachments),
+    any directory of files; extracts text from PDF/DOCX/XLSX/HTML; chunks
+    with overlap; idempotent on SHA-256 of file bytes, so re-importing an
+    export never duplicates.
+  - `search.py` — full-text ranking with snippets, composable filters
+    (party, type, date range), single-document view, and read-only
+    aggregate SQL. Plain-text output for humans, `--json` for tools.
+  - `vm/kb-setup.ps1` — provisions Python, PostgreSQL, the schema and data
+    folders through the existing repair loop, so a new deployment gets the
+    knowledge base at first boot and self-heals at every boot thereafter
+    (ADR-0005), like every other component.
+- Documents on disk remain the source of truth (ADR-0012): every row keeps
+  `source_path` back to the original file, and the index is rebuildable from
+  the exports at any time.
+
+### Notes
+
+- **pgvector is optional.** Migration 001 creates the entire schema without
+  it; migration 002 adds the embedding column where the extension exists.
+  SQL filters, full-text search and aggregates all work either way — only
+  semantic search requires it. Verified during rollout: the PostgreSQL 18
+  Chocolatey package on Windows Server does **not** bundle pgvector, and the
+  knowledge base installs and runs correctly regardless.
+- Ingestion reads exports the user runs (Google Takeout), not live APIs:
+  live mail sync would require OAuth, a running poller and an always-on VM,
+  each contradicting the stopped-by-default cost model (ADR-0001).
+
 ## [1.12.0] - 2026-07-27
 
 ### Added
