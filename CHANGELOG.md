@@ -4,6 +4,41 @@ All notable changes to this project are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versioning: [SemVer](https://semver.org/).
 
+## [1.15.0] - 2026-07-29
+
+### Added
+
+- **TDS rules engine** (`vm/rules/`): statutory values are computed by
+  table-driven code, never derived by the language model. Rates, thresholds,
+  due dates, interest and penalties live in `tds-in.json`; `tds_engine.py`
+  applies them.
+  - **Every rule carries its authority and its effective dates.** A rule with
+    no citation fails CI. A question about a date outside a rule's period is
+    refused rather than answered with the current rule — compliance questions
+    are almost always about a past period.
+  - **Threshold basis is explicit** (`per_month`, `per_year_per_vendor`,
+    `per_invoice_or_annual_aggregate`, `no_threshold`), because conflating
+    them is exactly how a real over-deduction happened: s.194I rent is
+    ₹50,000 **per month**, so ₹30,000/month needs no TDS despite being
+    ₹3,60,000 a year.
+  - Handles the 194C dual test, aggregate-crossing catch-up on earlier
+    untaxed payments, the s.194Q excess-only basis, and refuses s.195
+    outright as requiring a human.
+  - Interest counts a part month as a full month; the s.234E fee is capped at
+    the statement's TDS.
+  - 15 rules, all citing the Income-tax Act 2025 section and the superseded
+    1961 section, with the new-Act payment codes (1009 rent, 1027
+    professional fees, and the rest).
+- CI job `rules-engine`: runs the self-test, validates the rule set parses,
+  and fails if any rule lacks an authority citation.
+
+### Notes
+
+- The self-test cases are drawn from real filed work — the Palkar rent, the
+  ARTH audit fee, the Dipti Thite threshold crossing, the interest on the
+  FY25-26 ARTH default — not from invented examples. Statutory arithmetic
+  must not regress silently.
+
 ## [1.14.0] - 2026-07-28
 
 ### Added

@@ -77,3 +77,28 @@ jobs:
         run: python vm/kb/test_ingest.py
       - name: Byte-compile pipeline
         run: python -m compileall -q vm/kb/ingest.py vm/kb/search.py
+
+  rules-engine:
+    name: TDS rules engine (self-test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # Statutory arithmetic must never regress silently: every case in this
+      # self-test comes from real filed work, not invented examples.
+      - name: Run rules engine self-test
+        run: python vm/rules/tds_engine.py
+      - name: Validate rule set is parseable JSON
+        run: python -c "import json;d=json.load(open('vm/rules/tds-in.json'));print(len(d['rules']),'rules loaded')"
+      - name: Every rule must cite an authority
+        run: |
+          python - <<'PY'
+          import json, sys
+          d = json.load(open('vm/rules/tds-in.json'))
+          bad = [r['id'] for r in d['rules'] if not r.get('authority')]
+          if bad:
+              sys.exit(f"rules without an authority citation: {bad}")
+          print(f"all {len(d['rules'])} rules cite an authority")
+          PY
