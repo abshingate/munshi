@@ -218,6 +218,77 @@ def extract_with_pdfplumber(pdf_path: Path) -> tuple[list[dict], str | None]:
     return txns, None
 
 
+def extract_single_line_format(pdf_path: Path) -> tuple[list[dict], str | None]:
+    """Older ICICI layout: one transaction per line.
+
+        01-04-2017 B/F  3,80,75,579.12
+        03-04-2017NET BANKINGINF/020175312321/Reimbursement  14,454.00 3,80,61,125.12
+        06-04-2017 4000 USD @ 66.22 PUNEET CARD  2,65,268.66 3,72,93,191.37
+
+    Simpler than the modern format — the date leads the line and the last two
+    figures are movement and running balance — but the *columns are not
+    separated*, so the mode ("NET BANKING") runs straight into the
+    particulars. The date must therefore be anchored at the START of the
+    line, not merely found anywhere in it, or headers and footnotes match.
+    """
+    try:
+        from pypdf import PdfReader
+    except ImportError:
+        try:
+            from PyPDF2 import PdfReader
+        except ImportError:
+            return [], "pypdf not installed"
+
+    LEADING_DATE = re.compile(r"^\s*(\d{2})-(\d{2})-(\d{4})")
+    txns: list[dict] = []
+    try:
+        reader = PdfReader(str(pdf_path))
+        for pno, page in enumerate(reader.pages):
+            for raw in (page.extract_text() or "").splitlines():
+                line = raw.rstrip()
+                m = LEADING_DATE.match(line)
+                if not m:
+                    continue
+                if NOISE_RE.search(line):
+                    continue
+                try:
+                    d = date(int(m.group(3)), int(m.group(2)), int(m.group(1)))
+                except ValueError:
+                    continue
+
+                amounts = [parse_amount(a) for a in AMOUNT_RE.findall(line)]
+                amounts = [a for a in amounts if a is not None]
+                if not amounts:
+                    continue
+
+                # 'B/F' carries only the opening balance, no movement.
+                rest = line[m.end():]
+                if re.match(r"\s*B/F\b", rest, re.I):
+                    continue
+
+                if len(amounts) >= 2:
+                    movement, balance = amounts[-2], amounts[-1]
+                else:
+                    movement, balance = amounts[0], None
+
+                # Particulars: the line minus the date and the trailing
+                # figures. Rate expressions ("@ 66.22") stay in the text,
+                # which is correct — they are part of the narration.
+                desc = rest
+                for a in AMOUNT_RE.findall(rest)[-2:]:
+                    desc = desc.replace(a, " ")
+                desc = re.sub(r"\s+", " ", desc).strip()
+
+                txns.append({"page": pno, "date": d, "amount": movement,
+                             "balance": balance, "description": desc[:500]})
+    except Exception as e:
+        return [], f"single-line parse failed: {type(e).__name__}: {e}"
+
+    if not txns:
+        return [], "no lines began with a date followed by amounts"
+    return txns, None
+
+
 def extract_transactions(pdf_path: Path) -> tuple[list[dict], str | None]:
     """Extract transactions, preferring a real table extractor.
 
@@ -227,6 +298,12 @@ def extract_transactions(pdf_path: Path) -> tuple[list[dict], str | None]:
     The fallback exists only for PDFs with no recoverable table.
     """
     txns, err = extract_with_pdfplumber(pdf_path)
+    if txns:
+        return txns, None
+
+    # Older statements put one transaction per line — simpler and more
+    # reliable than geometry when the layout allows it.
+    txns, err_sl = extract_single_line_format(pdf_path)
     if txns:
         return txns, None
 

@@ -4,6 +4,31 @@ All notable changes to this project are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versioning: [SemVer](https://semver.org/).
 
+## [1.22.0] - 2026-07-29
+
+### Added
+
+- **Single-line statement parser** for the older ICICI layout (one
+  transaction per line: date, mode, particulars, withdrawal, balance).
+  Tried after pdfplumber and before coordinate reconstruction.
+  - On the FY 2017-18 statement: **547 transactions, every one with a
+    balance, and balance continuity clean across all 546 consecutive pairs —
+    zero breaks.** The extracted closing balance matches the statement
+    header to the paise.
+  - The date must anchor at the START of the line, not merely appear in it,
+    or headers and footnotes match.
+
+### Notes
+
+- The extractor now covers three layouts, tried in order of reliability:
+  pdfplumber tables (modern statements), single-line text (older
+  statements), then coordinate reconstruction (assistive fallback).
+- Worth recording that the failure path worked: presented with an
+  unrecognised layout the extractor returned **zero transactions and an
+  explanation** — "727 rows read: 563 carry a date, 585 carry an amount, but
+  no row carries both in a recognisable column layout" — rather than
+  inventing partial data. That diagnostic is what made the fix quick.
+
 ## [1.21.0] - 2026-07-29
 
 ### Changed
