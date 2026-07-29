@@ -198,6 +198,26 @@
       "fix": "Built fixed_assets.py (Schedule II depreciation with per-asset workings), notes.py (Schedule III notes), tax_computation.py (disallowances + regime comparison). Each states exactly which inputs it cannot derive and leaves those blank.",
       "generalisation": "When declining scope, name the specific blocker for each item. 'Needs an expert' covering several things at once is usually hiding at least one item that is merely difficult. The honest test: is the missing input a LAW, a LEDGER, or a BELIEF? Only beliefs need the human.",
       "severity": "high"
+    },
+    {
+      "id": "L019",
+      "date": "2026-07-29",
+      "title": "Assumed WDV depreciation and nearly reported a 6-lakh error that did not exist",
+      "what_happened": "The Fixed Asset Register computed 13,11,896 of depreciation against 7,03,508 booked - an apparent 6.08 lakh under-provision, which would have gone to the CA as a serious finding. The company uses the STRAIGHT LINE method. Under SLM the computation matched to 137 rupees on 7.03 lakh (0.02%), and to 23 rupees in FY2024-25. There was no error at all.",
+      "root_cause": "WDV was hard-coded as the default. Schedule II permits either method and does not prescribe one. WDV vs SLM differs by roughly 2x in early years - exactly the magnitude that looks like a serious under-provision.",
+      "fix": "detect_method() computes both and keeps whichever matches what was booked; --method defaults to 'auto'. The report shows both candidates and states which matched, so the basis is visible rather than assumed.",
+      "generalisation": "Before reporting that someone's figure is wrong, check whether a DIFFERENT PERMITTED ASSUMPTION reproduces it. Where a standard allows several treatments, infer which one is in use from the data instead of defaulting. A ~2x discrepancy is a strong hint of a method mismatch, not an error.",
+      "severity": "high"
+    },
+    {
+      "id": "L020",
+      "date": "2026-07-29",
+      "title": "Charged depreciation on gross cost where accumulated depreciation sat in separate ledgers",
+      "what_happened": "Asset ledgers hold ORIGINAL COST permanently (3D Printer stays at 13,35,000 every year) because the company keeps accumulated depreciation in separate 'Accumulated Depn : ...' ledgers. Applying a WDV rate to that gross figure over-charges every year after the first.",
+      "root_cause": "Assumed the asset ledger balance was the written-down value. Gross-block accounting is at least as common.",
+      "fix": "Net the block's accumulated depreciation off, apportioned across assets by cost, before applying a WDV rate. SLM correctly continues to charge on original cost.",
+      "generalisation": "Check whether a balance is gross or net before computing on it. Two ledgers that must be read together are easy to read singly.",
+      "severity": "medium"
     }
   ]
 }

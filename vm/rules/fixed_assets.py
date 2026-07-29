@@ -138,7 +138,36 @@ def days_in_year(d1: date, d2: date) -> int:
     return (d2 - d1).days + 1
 
 
-def compute(fy: str, method: str = "WDV") -> dict:
+def detect_method(fy: str) -> tuple[str, dict]:
+    """Infer the depreciation method the company actually uses.
+
+    Do NOT assume WDV. Schedule II permits either method, and picking the
+    wrong one produces a difference of roughly 2x that looks exactly like a
+    serious under-provision. Here, WDV suggested the company had under-charged
+    by 6.08 lakh; under SLM the computation matched the booked figure to
+    within 137 rupees on 7.03 lakh. The company was right and the assumption
+    was wrong.
+
+    Method: compute both and keep whichever lands closer to what was booked.
+    """
+    scores = {}
+    for m in ("SLM", "WDV"):
+        r = compute(fy, m, _detect=False)
+        booked = r["booked"]
+        scores[m] = {
+            "computed": r["computed"],
+            "booked": booked,
+            "diff": abs(r["computed"] - booked),
+            "pct": (abs(r["computed"] - booked) / booked * 100)
+                   if booked else float("inf"),
+        }
+    best = min(scores, key=lambda m: scores[m]["pct"])
+    return best, scores
+
+
+def compute(fy: str, method: str = "WDV", _detect: bool = False) -> dict:
+    if _detect:
+        method, _ = detect_method(fy)
     y = int(fy.split("-")[0])
     fy_start, fy_end = date(y, 4, 1), date(y + 1, 3, 31)
     sched = load_schedule2()
@@ -164,9 +193,42 @@ def compute(fy: str, method: str = "WDV") -> dict:
             continue
         assets.append(led)
 
+    # Accumulated depreciation lives in SEPARATE ledgers ('Accumulated Depn :
+    # Computers & Printers' etc.), so the asset ledger holds ORIGINAL COST
+    # permanently — the 3D Printer stays at 13,35,000 forever. Charging a WDV
+    # rate on that gross figure over-depreciates every year after the first.
+    # Net the accumulated block off before computing.
+    accum = {}
+    for led in ledgers:
+        low = led["name"].lower()
+        if "accumulated dep" in low:
+            # Group them by the asset class named in the ledger, e.g.
+            # 'Accumulated Depn : Computers & Printers' -> 'computers & printers'
+            key = re.split(r"[:\-]", led["name"], maxsplit=1)[-1].strip().lower()
+            accum[key] = accum.get(key, 0.0) + led["opening"]
+
+    def accumulated_for(parent: str) -> float:
+        """Opening accumulated depreciation attributable to an asset's group."""
+        p = (parent or "").strip().lower()
+        for key, val in accum.items():
+            if not key:
+                continue
+            # 'Computers & Printers' block matches the 'Computers & Printers'
+            # Tally group the asset sits under.
+            if key in p or p in key:
+                return val
+        return 0.0
+
     # Acquisition history: walk back to incorporation so an asset bought in
     # 2018 is dated correctly when we depreciate it in 2025.
     moves = asset_movements(2016, y, company)
+
+    # Apportion each block's accumulated depreciation across its assets by
+    # gross cost, so an individual asset's opening WDV can be estimated.
+    block_cost = {}
+    for a in assets:
+        p = (a["parent"] or "").strip().lower()
+        block_cost[p] = block_cost.get(p, 0.0) + max(0.0, -a["opening"])
 
     rows = []
     for a in assets:
@@ -186,9 +248,20 @@ def compute(fy: str, method: str = "WDV") -> dict:
         disposal_amt = sum(h["amount"] for h in disposals)
         closing_cost = -a["closing"]
 
+        # Opening WDV = gross cost less this asset's share of the block's
+        # accumulated depreciation, apportioned by cost.
+        p = (a["parent"] or "").strip().lower()
+        block_total = block_cost.get(p, 0.0)
+        block_accum = accumulated_for(a["parent"])
+        share = (max(0.0, opening_cost) / block_total) if block_total > 0 else 0.0
+        opening_accum = block_accum * share
+        opening_wdv = max(0.0, opening_cost - opening_accum)
+
         row = {
             "name": a["name"], "parent": a["parent"],
             "opening_cost": opening_cost,
+            "opening_accum": opening_accum,
+            "opening_wdv": opening_wdv,
             "additions": addition_amt, "disposals": disposal_amt,
             "closing_cost": closing_cost,
             "first_acquired": first_buy,
@@ -213,19 +286,26 @@ def compute(fy: str, method: str = "WDV") -> dict:
             charge = 0.0
             workings = []
 
-            # Assets held at the start of the year: full-year charge on the
-            # opening written-down value.
+            # Assets held at the start of the year: full-year charge.
+            # WDV charges on the written-down value; SLM on original cost.
             if opening_cost > 0.005:
                 if method == "WDV":
-                    c = opening_cost * rate
+                    base = opening_wdv
+                    c = base * rate
+                    workings.append(
+                        f"opening cost {rupees(opening_cost)} less accumulated "
+                        f"depreciation {rupees(opening_accum)} "
+                        f"= WDV {rupees(opening_wdv)}")
+                    workings.append(
+                        f"WDV {rupees(opening_wdv)} x {row['rate']}% "
+                        f"= {rupees(c)}")
                 else:
-                    # SLM charges on ORIGINAL cost, so the base is the gross
-                    # block, not the written-down value.
-                    c = opening_cost * rate
+                    base = opening_cost
+                    c = base * rate
+                    workings.append(
+                        f"cost {rupees(opening_cost)} x {row['rate']}% (SLM) "
+                        f"= {rupees(c)}")
                 charge += c
-                workings.append(
-                    f"opening {rupees(opening_cost)} x {row['rate']}% "
-                    f"= {rupees(c)}")
 
             # Additions: pro-rata from the date put to use (Sch II Part C).
             for h in additions:
@@ -237,8 +317,10 @@ def compute(fy: str, method: str = "WDV") -> dict:
                     f"{row['rate']}% x {held}/365 = {rupees(c)}")
 
             # Never depreciate below residual value (Sch II Part A para 5).
+            # The floor is 5% of ORIGINAL COST; the balance being tested
+            # against it is the written-down value, not the gross block.
             floor = closing_cost * residual if closing_cost > 0 else 0.0
-            wdv_before = opening_cost + addition_amt - disposal_amt
+            wdv_before = opening_wdv + addition_amt - disposal_amt
             if wdv_before - charge < floor:
                 capped = max(0.0, wdv_before - floor)
                 if capped < charge:
@@ -306,17 +388,39 @@ def render(res: dict) -> str:
     A(f"| Depreciation **booked in Tally** | {rupees(res['booked'])} |")
     A(f"| **Difference** | **{rupees(diff)}** |")
     A("")
-    if abs(diff) < 1:
-        A("The booked charge agrees with the Schedule II computation.")
+    pct = abs(diff) / res["booked"] * 100 if res["booked"] else 0.0
+    if pct < 0.5:
+        A(f"✅ **The booked charge agrees with the Schedule II computation** "
+          f"on the **{res['method']}** method — a difference of "
+          f"{rupees(abs(diff))} on {rupees(res['booked'])} ({pct:.2f}%), which")
+        A("is rounding. No adjustment appears necessary.")
     else:
         direction = "MORE than" if diff > 0 else "LESS than"
         A(f"⚠️ **The computation is {rupees(abs(diff))} {direction} what Tally "
-          f"booked.** This needs explaining before the accounts are finalised —")
-        A("it affects reported profit and therefore tax. Common causes: a")
-        A("different useful life, a different method, assets not put to use for")
+          f"booked** ({pct:.1f}%). This needs explaining before the accounts")
+        A("are finalised — it affects reported profit and therefore tax.")
+        A("Common causes: a different useful life, assets not put to use for")
         A("the full period, or a charge booked as a lump sum rather than")
         A("asset-wise.")
     A("")
+
+    if res.get("method_scores"):
+        A("### Which method the company uses")
+        A("")
+        A("Not assumed — inferred by computing both and comparing against what")
+        A("was actually booked:")
+        A("")
+        A("| Method | Computed ₹ | Booked ₹ | Difference ₹ | |")
+        A("|---|---:|---:|---:|---|")
+        for m, s in res["method_scores"].items():
+            mark = " ← **matches**" if m == res["method"] else ""
+            A(f"| {m} | {rupees(s['computed'])} | {rupees(s['booked'])} "
+              f"| {rupees(s['diff'])} ({s['pct']:.1f}%) |{mark} |")
+        A("")
+        A("Schedule II permits either method. Picking the wrong one produces a")
+        A("difference of roughly 2x that looks exactly like a serious")
+        A("under-provision — so the method is detected, never assumed.")
+        A("")
 
     unresolved = [r for r in rows if r["issues"]]
     if unresolved:
@@ -336,23 +440,25 @@ def render(res: dict) -> str:
     # --- the register ---
     A("## Fixed Asset Register")
     A("")
-    A("| Asset | Class (Sch II) | Life | Rate | Acquired | Opening cost ₹ "
-      "| Additions ₹ | Disposals ₹ | Closing cost ₹ | Depreciation ₹ "
+    A("| Asset | Class (Sch II) | Life | Rate | Acquired | Gross cost ₹ "
+      "| Accum. depn ₹ | Opening WDV ₹ | Additions ₹ | Depreciation ₹ "
       "| Closing WDV ₹ |")
     A("|---|---|---:|---:|---|---:|---:|---:|---:|---:|---:|")
     for r in sorted(rows, key=lambda x: -(x["closing_cost"] or 0)):
         A(f"| {r['name'][:30]} | {(r['class'] or 'UNCLASSIFIED')[:30]} "
           f"| {r['life'] or '-'} | {str(r['rate'] or '-')}% "
           f"| {r['first_acquired'] or '?'} "
-          f"| {rupees(r['opening_cost'])} | {rupees(r['additions'])} "
-          f"| {rupees(r['disposals'])} | {rupees(r['closing_cost'])} "
+          f"| {rupees(r['opening_cost'])} | {rupees(r.get('opening_accum'))} "
+          f"| {rupees(r.get('opening_wdv'))} | {rupees(r['additions'])} "
           f"| {rupees(r['charge']) if r['charge'] is not None else 'n/a'} "
           f"| {rupees(r['closing_wdv']) if r['closing_wdv'] is not None else 'n/a'} |")
     tot_open = sum(r["opening_cost"] for r in rows)
+    tot_accum = sum(r.get("opening_accum") or 0 for r in rows)
+    tot_wdv = sum(r.get("opening_wdv") or 0 for r in rows)
     tot_add = sum(r["additions"] for r in rows)
-    tot_close = sum(r["closing_cost"] for r in rows)
-    A(f"| **TOTAL** | | | | | **{rupees(tot_open)}** | **{rupees(tot_add)}** "
-      f"| | **{rupees(tot_close)}** | **{rupees(res['computed'])}** | |")
+    A(f"| **TOTAL** | | | | | **{rupees(tot_open)}** | **{rupees(tot_accum)}** "
+      f"| **{rupees(tot_wdv)}** | **{rupees(tot_add)}** "
+      f"| **{rupees(res['computed'])}** | |")
     A("")
 
     # --- workings ---
@@ -399,11 +505,19 @@ def main() -> int:
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--fy", required=True)
-    ap.add_argument("--method", default="WDV", choices=["WDV", "SLM"])
+    ap.add_argument("--method", default="auto", choices=["auto", "WDV", "SLM"],
+                    help="default 'auto' infers the method from what was "
+                         "booked, rather than assuming one")
     ap.add_argument("--out")
     args = ap.parse_args()
 
-    res = compute(args.fy, args.method)
+    if args.method == "auto":
+        method, scores = detect_method(args.fy)
+        res = compute(args.fy, method)
+        res["method_scores"] = scores
+        print(f"detected method: {method}")
+    else:
+        res = compute(args.fy, args.method)
     if not res["rows"]:
         print(f"No fixed-asset ledgers with balances in FY{args.fy}.")
         return 1
