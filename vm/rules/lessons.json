@@ -84,6 +84,17 @@
       "cost": "None — caught on the first real run. But an invented transaction is the one parsing error that cannot be recovered by re-reading, because nothing downstream can tell it apart from a genuine one.",
       "safeguard": "vm/rules/reconcile.py adds NOISE_RE rejecting timestamps, balance/lien footers, page furniture and totals, plus a rule that at least one amount must be greater than zero. Every pattern in NOISE_RE comes from an observed false positive, and vm/rules/test_reconcile.py asserts both that the noise lines are rejected and that the real transactions on the same page still parse.",
       "verified": "test_reconcile.py::TestNoiseRejection"
+    },
+    {
+      "id": "L008",
+      "date": "2026-07-29",
+      "found": "2026-07-29",
+      "title": "Statement loader reported 'no transactions' for a statement full of them",
+      "what_happened": "A full-year statement containing hundreds of transactions parsed to zero. The PDF extracts as fragmented text with dates and amounts on separate lines ('TAX:0.8,080.00 5,31,763.'), which the line-based parser cannot match. It reported '0 transactions' and moved on.",
+      "root_cause": "The parser had no way to distinguish 'this period had no activity' from 'I cannot read this layout', and reported both identically.",
+      "cost": "None yet — caught in testing. In use it would have been worse than a crash: coverage would show the year as loaded, the evidence report would show 100% completeness, and a year of transactions would be invisible while every indicator said fine.",
+      "safeguard": "vm/rules/reconcile.py adds diagnose_text(), which counts lines carrying dates versus amounts and names the actual cause — fragmented layout needing a table-aware extractor, a scan needing OCR, or an unsupported date format. The loader refuses to mark coverage 'held' when nothing parsed, so the year stays visibly 'missing'. Covered by test_reconcile.py::TestDiagnostics.",
+      "verified": "test_reconcile.py::TestDiagnostics, and run against the real FY2025-26 statement: reports '306 lines have a date, 281 have an amount, but none have both'"
     }
   ]
 }

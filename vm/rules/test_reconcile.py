@@ -94,5 +94,37 @@ class TestFinancialYear(unittest.TestCase):
         self.assertEqual(reconcile.fy_of(date(2026, 3, 31)), "2025-26")
 
 
+class TestDiagnostics(unittest.TestCase):
+    """A parser that cannot read a statement must say so, not report zero.
+
+    Reporting "0 transactions" for a statement full of them is worse than
+    crashing: coverage shows the year as loaded, evidence completeness shows
+    100%, and a year of activity is invisible while every indicator says fine.
+    """
+
+    def test_empty_text_diagnosed_as_scan(self):
+        msg = reconcile.diagnose_text("")
+        self.assertIsNotNone(msg)
+        self.assertIn("OCR", msg)
+        self.assertIn("NOT empty", msg)
+
+    def test_fragmented_layout_is_diagnosed(self):
+        # Dates on one line, amounts on another — the real failure mode.
+        text = "01/04/2025\nsome narration\n5,31,763.00\n02/04/2025\nmore\n8,080.00"
+        msg = reconcile.diagnose_text(text)
+        self.assertIsNotNone(msg)
+        self.assertIn("separate lines", msg)
+
+    def test_readable_text_has_no_complaint(self):
+        text = "8 06/Mar/2026 GIB/002060223600/DTAX /260306000031 5500.00 12345.00"
+        self.assertIsNone(reconcile.diagnose_text(text))
+
+    def test_amounts_without_dates_diagnosed(self):
+        text = "narration only 1,234.56\nanother line 7,890.12"
+        msg = reconcile.diagnose_text(text)
+        self.assertIsNotNone(msg)
+        self.assertIn("date", msg)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

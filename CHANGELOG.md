@@ -4,6 +4,37 @@ All notable changes to this project are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versioning: [SemVer](https://semver.org/).
 
+## [1.18.0] - 2026-07-29
+
+### Added
+
+- **Evidence completeness** (`vm/rules/evidence.py`): answers the question an
+  audit actually asks — *what is missing?* Documents were already searchable
+  and filed entries already carried a marker back to their voucher; both
+  answer "find the document for this entry". This answers the reverse.
+  - `EVIDENCE_RULES` encodes what each kind of transaction needs: a vendor
+    payment needs an invoice, a tax payment needs a challan, bank interest
+    and internal transfers need nothing. Transactions needing no document are
+    **excluded** from the percentage rather than counted as failures —
+    counting bank charges as "missing evidence" would bury the real gaps.
+  - `--report` gives completeness by document type; `--missing --min N`
+    lists what to go and find, largest first.
+  - Evidence matching is deliberately conservative (amount within ₹1 **and**
+    date within 15 days, or a distinctive reference token). A loose match
+    that reports "evidence found" when it has not been is worse than
+    reporting a gap, because it closes the question wrongly.
+
+### Fixed
+
+- **The statement loader reported "no transactions" for a statement full of
+  them.** A full-year PDF extracts as fragmented text with dates and amounts
+  on separate lines, which the line-based parser cannot match — and it
+  reported zero and moved on. In use this would have been worse than a crash:
+  coverage would show the year as loaded, evidence completeness would show
+  100%, and a year of activity would be invisible while every indicator said
+  fine. `diagnose_text()` now names the actual cause and the loader refuses
+  to mark coverage "held" when nothing parsed.
+
 ## [1.17.0] - 2026-07-29
 
 ### Added

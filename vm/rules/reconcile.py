@@ -106,6 +106,37 @@ def row_hash(account: str, d: date, desc: str, debit, credit) -> str:
     return hashlib.sha256(blob.encode()).hexdigest()
 
 
+def diagnose_text(text: str) -> str | None:
+    """Explain WHY nothing parsed, when nothing parses.
+
+    A parser that reports "0 transactions" for a statement containing
+    hundreds is worse than one that fails loudly: the operator concludes the
+    period was quiet. Real case: a full-year statement extracted as
+    fragmented lines ("TAX:0.8,080.00 5,31,763.") with amounts split across
+    line breaks, and the loader silently reported nothing.
+    """
+    if not text or not text.strip():
+        return ("no text could be extracted — the statement is probably a scan "
+                "and needs OCR. It is NOT empty.")
+    lines = text.splitlines()
+    with_amount = sum(1 for l in lines if re.search(r"\d+\.\d{2}", l))
+    with_date = sum(1 for l in lines if any(p.search(l) for p, _ in DATE_PATTERNS))
+    both = sum(1 for l in lines
+               if re.search(r"\d+\.\d{2}", l)
+               and any(p.search(l) for p, _ in DATE_PATTERNS))
+    if with_amount and with_date and not both:
+        return (f"the layout puts dates and amounts on separate lines "
+                f"({with_date} lines have a date, {with_amount} have an amount, "
+                f"but none have both). This PDF needs a table-aware extractor, "
+                f"not line matching — the data is there.")
+    if with_amount and not with_date:
+        return (f"{with_amount} lines carry amounts but none carry a recognisable "
+                f"date — the date format may be unsupported.")
+    if not with_amount:
+        return "no monetary amounts found in the extracted text."
+    return None
+
+
 def parse_statement_text(text: str) -> list[dict]:
     """Extract transactions from statement text.
 
@@ -341,7 +372,11 @@ def main() -> int:
             txns = parse_statement_text(text)
             if not txns:
                 print(f"No transactions parsed from {path.name}.")
-                print("If the statement is a scan, it needs OCR — it is not empty.")
+                why = diagnose_text(text)
+                if why:
+                    print(f"  Reason: {why}")
+                print("  NOT loaded. Coverage for this period stays 'missing' "
+                      "rather than being wrongly marked held.")
                 return 1
 
             acct_id = ensure_account(conn, args.account)
