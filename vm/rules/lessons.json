@@ -1,0 +1,79 @@
+{
+  "description": "Mistakes made, and what changed so they cannot recur. Every entry must name a concrete safeguard — a rule, a test, a check — not merely an intention to be careful.",
+  "why": "A mistake that produces only an apology will happen again. A mistake that produces a test will not. This file is the audit trail of that conversion, and reading it is part of onboarding.",
+  "rules_for_this_file": [
+    "Add an entry the moment an error is found, not later.",
+    "'safeguard' must be something executable or checkable. 'Be more careful' is not a safeguard.",
+    "Never delete an entry. A corrected mistake is still evidence of a weak spot.",
+    "If the same root cause appears twice, the safeguard was inadequate — say so and strengthen it."
+  ],
+
+  "lessons": [
+    {
+      "id": "L001",
+      "date": "2026-05-07",
+      "found": "2026-07-28",
+      "title": "Rent TDS deducted when none was due",
+      "what_happened": "₹3,000 was deducted under s.194I on rent of ₹30,000/month. The annual total (₹3,60,000) was compared against the ₹50,000 threshold, but that threshold is PER MONTH. ₹30,000/month is below it, so no TDS was ever due.",
+      "root_cause": "Threshold basis was carried in prose, where per-month and per-year read alike.",
+      "cost": "₹3,000 wrongly withheld from the landlord, a challan filed under the wrong year, and a Q1 return that had to include a deduction that should not have existed.",
+      "safeguard": "vm/rules/tds-in.json encodes threshold_basis explicitly ('per_month'). vm/rules/tds_engine.py refuses to compare a monthly-basis threshold against an annual total, and states in its explanation that 'annualised X is NOT the test'. Covered by a self-test case that fails if the behaviour regresses.",
+      "verified": "tds_engine.py self-test, case 'rent 30,000/month -> no TDS'"
+    },
+    {
+      "id": "L002",
+      "date": "2022-09-29",
+      "found": "2026-07-28",
+      "title": "A vendor paid gross for four consecutive years",
+      "what_happened": "Professional fees to the auditor were paid without TDS across FY2022-23 to FY2025-26 — roughly ₹4,71,000 of payments and ₹47,000 of undeducted TDS. Nobody was tracking the cumulative total per vendor.",
+      "root_cause": "No monitoring. The rule was never in doubt; the running total was simply never computed.",
+      "cost": "~₹47,000 of TDS plus interest, spread across years now largely beyond correction.",
+      "safeguard": "vm/rules/monitor.py computes year-to-date totals per vendor per section and flags 'breached-undeducted' and 'approaching' before the next payment. --check-payment answers 'what happens if I pay this?' BEFORE the money moves.",
+      "verified": "monitor.py --check-payment on the live register returns the correct net-payable"
+    },
+    {
+      "id": "L003",
+      "date": "2026-01-29",
+      "found": "2026-07-28",
+      "title": "Professional advice conflicted with the statute and was followed",
+      "what_happened": "The firm's own tax team computed TDS of ₹12,500 plus ₹750 interest, then 73 minutes later withdrew it: 'tax is not deducted since the company already has significant accumulated losses'. Losses do not remove a deductor's liability under s.201 — they affect only the s.40(a)(ia) disallowance.",
+      "root_cause": "Two distinct consequences of non-deduction were conflated, and the advice came from the party being paid.",
+      "cost": "₹12,500 plus accruing interest, and a fourth year added to the pattern in L002.",
+      "safeguard": "tds-in.json records under 'penalty-non-deduction' that the 30% disallowance is a CONSEQUENCE of not deducting, never an alternative to it, and that the deductor remains liable under s.201 regardless of either party's losses. Roadmap phase 6 makes conflicts between advice and encoded rules visible rather than silently resolved.",
+      "verified": "note present in tds-in.json interest_and_penalties"
+    },
+    {
+      "id": "L004",
+      "date": "2026-07-28",
+      "found": "2026-07-28",
+      "title": "The assistant asserted a fact it had not checked",
+      "what_happened": "Asked which section a ₹980 default related to, the assistant answered 'rent TDS' by reasoning from a pattern seen in a different financial year. The bank statement showed no rent TDS in FY2024-25 at all. The operator asked 'are you sure? how did you find out?' and the claim collapsed.",
+      "root_cause": "Pattern-matching substituted for retrieval, and the answer was stated with the same confidence as verified findings.",
+      "cost": "None — caught immediately. Had it not been challenged, it would have driven a payment under the wrong section code.",
+      "safeguard": "Two things. (1) Every answer about a fact must cite the document, bank line or voucher it came from; an uncited claim is a defect. (2) The coverage table (kb migration 003) makes 'I hold no evidence for that' an available and expected answer. Recorded in docs/compliance-safety-net.md as an explicit limit of the assistant, with the operator's challenge named as a control that works.",
+      "verified": "docs/compliance-safety-net.md, section 'Four limits worth stating plainly', item 3"
+    },
+    {
+      "id": "L005",
+      "date": "2026-07-28",
+      "found": "2026-07-28",
+      "title": "A migration recorded itself as applied when it had failed",
+      "what_happened": "Migration 002 added a pgvector column. On a server without the extension it failed — but psql continued past the error and still inserted the schema_version row, so the schema history claimed a migration that had not run.",
+      "root_cause": "psql continues after errors unless ON_ERROR_STOP is set, and the migration was not wrapped in a transaction.",
+      "cost": "None in production; found during testing. Would have caused silent divergence between recorded and actual schema.",
+      "safeguard": "Migrations run with -v ON_ERROR_STOP=1, migration 002 is wrapped in BEGIN/COMMIT so a failure rolls back its own version row, and kb-setup.ps1 re-queries schema_version after running rather than trusting the exit code.",
+      "verified": "kb-setup.ps1 reports 'migration 002 skipped (needs pgvector)' and schema_version correctly omits version 2"
+    },
+    {
+      "id": "L006",
+      "date": "2026-07-28",
+      "found": "2026-07-28",
+      "title": "Document classification silently ignored the project's own filenames",
+      "what_happened": "Regex word boundaries (\\b) treat _ and - as word characters, so '\\bchallan\\b' did not match '2026-05-07_challan.pdf' — exactly the naming convention ADR-0012 prescribes. Scanned documents with no extractable text were left unclassified and invisible to type filters.",
+      "root_cause": "A regex assumption never tested against a real filename.",
+      "cost": "34 documents unfindable by type in a 291-document corpus. No external consequence, but the search would have quietly under-reported for months.",
+      "safeguard": "Separators are normalised to spaces before matching, the filename is searched before the body, and vm/kb/test_ingest.py has a case asserting a scanned challan classifies from its filename alone.",
+      "verified": "test_ingest.py::TestDocTypeDetection::test_uses_filename_when_body_empty"
+    }
+  ]
+}

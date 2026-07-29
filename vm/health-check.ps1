@@ -77,6 +77,14 @@ Check "Knowledge base: semantic search" {
     if (-not $kbPg) { $true }
     else { (Invoke-Kb "SELECT count(*) FROM information_schema.columns WHERE table_name='kb_chunk' AND column_name='embedding'") -match "1" }
 } "pgvector not installed - SQL and full-text search still work; see vm/kb/README.md to enable" -WarnOnly
+Check "Rules engine: computes correctly" {
+    $py = @(Get-Command python.exe -ErrorAction SilentlyContinue | ForEach-Object { $_.Source }) +
+          @(Get-ChildItem "C:\Python3*\python.exe" -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName }) |
+          Where-Object { $_ } | Sort-Object -Descending | Select-Object -First 1
+    if (-not $py) { $false }
+    else { & $py "C:\HealthCheck\vm\rules\tds_engine.py" *> $null; $LASTEXITCODE -eq 0 }
+} "statutory arithmetic is failing its own self-test - do NOT rely on computed TDS until fixed"
+
 Check "Knowledge base: Python pipeline" {
     $py = @(Get-Command python.exe -ErrorAction SilentlyContinue | ForEach-Object { $_.Source }) +
           @(Get-ChildItem "C:\Python3*\python.exe" -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName }) |

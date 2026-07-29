@@ -90,6 +90,8 @@ jobs:
       # self-test comes from real filed work, not invented examples.
       - name: Run rules engine self-test
         run: python vm/rules/tds_engine.py
+      - name: Run rules and lessons tests
+        run: python vm/rules/test_rules.py
       - name: Validate rule set is parseable JSON
         run: python -c "import json;d=json.load(open('vm/rules/tds-in.json'));print(len(d['rules']),'rules loaded')"
       - name: Every rule must cite an authority

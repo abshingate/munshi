@@ -4,6 +4,42 @@ All notable changes to this project are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versioning: [SemVer](https://semver.org/).
 
+## [1.16.0] - 2026-07-29
+
+### Added
+
+- **Compliance monitor** (`vm/rules/monitor.py`): deadlines and thresholds,
+  answered through the rules engine so it holds no tax knowledge of its own.
+  - Deadline tracking across the salary schedule, undeposited vendor TDS and
+    quarterly returns, with overdue items separated from approaching ones.
+  - **Cumulative threshold monitoring per vendor per section**, flagging
+    `breached-undeducted` and `approaching` (80%) — the control that was
+    missing while a vendor was paid gross for four consecutive years.
+  - `--check-payment VENDOR AMOUNT RULE` answers *"what happens if I pay
+    this?"* **before** the money moves, returning the net amount to pay and
+    any catch-up on earlier untaxed payments. Checking after payment is how
+    gross payments accumulate.
+  - Alerts for a quarter already carrying an acknowledgement are suppressed:
+    an alert that fires for completed work trains the operator to ignore
+    alerts.
+- **Lessons register** (`vm/rules/lessons.json`): every mistake, its root
+  cause, and the concrete safeguard that now prevents it. Six entries so far,
+  each naming an executable control.
+- **Tests** (`vm/rules/test_rules.py`, 26 cases): engine correctness, rule-set
+  integrity (every rule cites an authority and is effective-dated), and
+  **process integrity** — a test asserts that no lesson's safeguard is a
+  vague intention. Verified by negative test: "Be more careful next time" is
+  rejected with a clear failure.
+- Health check gained a rules-engine test; CI runs the rules and lessons
+  tests on every push.
+
+### Notes
+
+- The lessons register exists because a mistake that produces only an apology
+  will recur, while one that produces a test will not. The
+  `safeguards_are_concrete_not_intentions` test is what gives "we learned
+  from it" a definition: something now fails if it happens again.
+
 ## [1.15.0] - 2026-07-29
 
 ### Added
