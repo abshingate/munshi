@@ -4,6 +4,35 @@ All notable changes to this project are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versioning: [SemVer](https://semver.org/).
 
+## [1.20.0] - 2026-07-29
+
+### Added
+
+- **Coordinate-aware statement extraction** (`vm/rules/pdf_table.py`): reads
+  bank PDFs whose text layer is fragments rather than lines, by grouping text
+  by (x, y) position and learning the column geometry from the statement
+  itself rather than hard-coding it. On the statement it was built against it
+  extracts 240 transactions where line parsing extracted zero.
+  - `cross_check()` verifies that transactions **known** to be in a period
+    were actually extracted.
+  - `sanity_check()` tests balance continuity, date ordering and completeness
+    of dates.
+
+### Notes
+
+- **The extractor is ASSISTIVE, not authoritative, and says so in its
+  docstring.** Cross-checking against known transactions showed it missed a
+  ₹1,47,500 payment and a ₹5,50,000 payment, and found 9 of 12 monthly
+  challans — while every internal indicator looked healthy. Two causes: the
+  statement interleaves two accounts so a single balance chain does not
+  apply, and some rows split date and amount differently from the anchor
+  heuristic.
+- The general lesson (L009): **balance continuity proves internal
+  consistency, not completeness.** A self-consistent extraction can still be
+  missing a third of the statement. Only checking for transactions you
+  already know exist catches that. Coverage is never marked "held" on this
+  extractor's output alone.
+
 ## [1.19.0] - 2026-07-29
 
 ### Added
