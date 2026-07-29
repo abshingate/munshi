@@ -121,14 +121,14 @@ if ($pgBin -and (Test-Postgres $pgBin)) {
 
 # --- Python packages ---------------------------------------------------------
 if ($python) {
-    $needed = @("psycopg[binary]", "pypdf", "python-docx", "openpyxl", "beautifulsoup4")
-    $probe = & $python -c "import psycopg, pypdf, docx, openpyxl, bs4; print('ok')" 2>$null
+    $needed = @("psycopg[binary]", "pypdf", "pdfplumber", "python-docx", "openpyxl", "beautifulsoup4")
+    $probe = & $python -c "import psycopg, pypdf, pdfplumber, docx, openpyxl, bs4; print('ok')" 2>$null
     if ($probe -match "ok") {
         Report "OK" "Python packages"
     } else {
         & $python -m pip install --quiet --upgrade pip *> $null
         & $python -m pip install --quiet @needed *> $null
-        $probe = & $python -c "import psycopg, pypdf, docx, openpyxl, bs4; print('ok')" 2>$null
+        $probe = & $python -c "import psycopg, pypdf, pdfplumber, docx, openpyxl, bs4; print('ok')" 2>$null
         if ($probe -match "ok") { Report "FIXED" "Python packages" } else { Report "FAILED" "Python packages" }
     }
 }

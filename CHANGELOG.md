@@ -4,6 +4,29 @@ All notable changes to this project are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versioning: [SemVer](https://semver.org/).
 
+## [1.21.0] - 2026-07-29
+
+### Changed
+
+- **Statement extraction now uses pdfplumber**, falling back to coordinate
+  reconstruction only where no table can be recovered. Bank statements *are*
+  ruled tables; recovering the table directly removes every heuristic about
+  x-positions and right-aligned amounts.
+  - On the statement both approaches were tested against: **299 transactions,
+    all with balances, cross-check ALL FOUND** — versus 240 with the
+    coordinate approach, which silently dropped a ₹1,47,500 payment.
+  - 299 independently matches the count the existing reconciliation engine
+    handled for the same year.
+- `pdfplumber` added to VM provisioning (`vm/kb-setup.ps1`).
+
+### Notes
+
+- L009 updated with the resolution and a second, broader lesson: **reach for
+  the right library before hand-rolling geometry.** Four rounds of heuristic
+  tuning went into a problem pdfplumber solves outright. The original
+  lesson — balance continuity proves internal consistency, not completeness —
+  stands, and is what caught the regression in the first place.
+
 ## [1.20.0] - 2026-07-29
 
 ### Added

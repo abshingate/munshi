@@ -100,12 +100,14 @@
       "id": "L009",
       "date": "2026-07-29",
       "found": "2026-07-29",
-      "title": "Coordinate extractor looked successful while missing a third of the statement",
+      "title": "Hand-rolled coordinate extraction looked successful while missing a third of the statement",
       "what_happened": "A coordinate-aware extractor pulled 240 transactions from a statement that line parsing could not read at all — every row dated, every row with an amount, descriptions correct, balances plausible. Cross-checking against three transactions known to be in that period found only one: the ₹1,47,500 ARTH audit fee and the ₹5,50,000 salary-arrears TDS were both absent, and only 9 of 12 monthly rent challans appeared.",
       "root_cause": "Two causes. The statement interleaves two accounts (current and FD) so a single running-balance chain does not apply; and the anchor heuristic requires a date and an amount in the movement column on the SAME visual row, which some layouts split differently. Neither was visible from internal consistency alone.",
       "cost": "None — caught before use. Had it been trusted, reconciliation would have reported clean exceptions while a third of the year's transactions were simply absent, and evidence completeness would have shown a high percentage against an incomplete population.",
-      "safeguard": "vm/rules/pdf_table.py adds cross_check(), which verifies that transactions known to exist in a period were actually extracted, and the module docstring states plainly that balance continuity proves internal consistency but NOT completeness. The extractor is documented as ASSISTIVE — its output must be cross-checked against known transactions before any period is marked verified, and it does not mark coverage 'held' by itself.",
-      "verified": "cross_check() against the FY2025-26 statement reports the two missing payments by name"
+      "safeguard": "vm/rules/pdf_table.py adds cross_check(), which verifies that transactions known to exist in a period were actually extracted, and the module docstring states plainly that balance continuity proves internal consistency but NOT completeness. The extractor is documented as ASSISTIVE — its output must be cross-checked against known transactions before any period is marked verified, and it does not mark coverage 'held' by itself. Superseded in practice: vm/rules/pdf_table.py now tries pdfplumber FIRST and falls back to coordinates only when no table is recoverable. The wider lesson stands and is why the regression was caught at all.",
+      "verified": "cross_check() against the FY2025-26 statement reports the two missing payments by name",
+      "outcome_2026_07_29": "RESOLVED by using a real table extractor. pdfplumber recovers the statement's actual ruled table with clean columns, giving 299 transactions (matching the count the existing reconciliation engine independently handled for this year), all with balances, and cross_check() reporting ALL FOUND. The coordinate approach is retained only as a fallback for PDFs with no recoverable table, and is documented as assistive.",
+      "general_lesson": "Balance continuity proves internal consistency, not completeness. Only checking for transactions you already know exist catches a silently incomplete extraction. Equally: reach for the right library before hand-rolling geometry — four rounds of heuristic tuning were spent on a problem pdfplumber solves outright."
     }
   ]
 }
