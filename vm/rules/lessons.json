@@ -7,7 +7,6 @@
     "Never delete an entry. A corrected mistake is still evidence of a weak spot.",
     "If the same root cause appears twice, the safeguard was inadequate — say so and strengthen it."
   ],
-
   "lessons": [
     {
       "id": "L001",
@@ -74,6 +73,17 @@
       "cost": "34 documents unfindable by type in a 291-document corpus. No external consequence, but the search would have quietly under-reported for months.",
       "safeguard": "Separators are normalised to spaces before matching, the filename is searched before the body, and vm/kb/test_ingest.py has a case asserting a scanned challan classifies from its filename alone.",
       "verified": "test_ingest.py::TestDocTypeDetection::test_uses_filename_when_body_empty"
+    },
+    {
+      "id": "L007",
+      "date": "2026-07-29",
+      "found": "2026-07-29",
+      "title": "Statement parser invented transactions from page furniture",
+      "what_happened": "Loading a real FD statement produced 6 'transactions', two of which were not transactions at all: a printed timestamp ('Date And Time : 09/03/2026 12.44 PM') became a ₹12.44 line, and a 'Lien Balance: 0.00' footer became a zero-value line. Both contained a date and a decimal number, which was the only test applied.",
+      "root_cause": "The parser accepted any line containing a date and a number. Statement footers and headers satisfy that trivially.",
+      "cost": "None — caught on the first real run. But an invented transaction is the one parsing error that cannot be recovered by re-reading, because nothing downstream can tell it apart from a genuine one.",
+      "safeguard": "vm/rules/reconcile.py adds NOISE_RE rejecting timestamps, balance/lien footers, page furniture and totals, plus a rule that at least one amount must be greater than zero. Every pattern in NOISE_RE comes from an observed false positive, and vm/rules/test_reconcile.py asserts both that the noise lines are rejected and that the real transactions on the same page still parse.",
+      "verified": "test_reconcile.py::TestNoiseRejection"
     }
   ]
 }

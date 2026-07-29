@@ -4,6 +4,40 @@ All notable changes to this project are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versioning: [SemVer](https://semver.org/).
 
+## [1.17.0] - 2026-07-29
+
+### Added
+
+- **Continuous reconciliation** (`vm/rules/reconcile.py`): bank statements
+  loaded into `bank_transaction`, exceptions that persist between runs, and
+  coverage tracked per financial year. The existing matcher
+  (`vm/app/lib/recon.js`) is not replaced — its four-pass matching is sound;
+  what was missing was continuity, so nothing accumulated and nothing was
+  watched across periods.
+  - Idempotent on a row hash that includes the description, so two identical
+    amounts on one day stay distinct rather than silently collapsing.
+  - `--exceptions` lists bank lines with no matching voucher: money moved and
+    the books do not know. That list is the product.
+  - `--status` reports evidence coverage per year, marking years that cannot
+    be verified at all.
+
+### Fixed
+
+- **Statement parser invented transactions from page furniture.** A printed
+  timestamp ("Date And Time : 09/03/2026 12.44 PM") became a ₹12.44 line and
+  a "Lien Balance: 0.00" footer became a zero-value line, because the only
+  test applied was "contains a date and a number". Fixed with a noise filter
+  whose every pattern comes from an observed false positive, plus a rule that
+  at least one amount must exceed zero. On the real statement that exposed
+  it: 6 parsed rows became 4, all genuine.
+
+### Notes
+
+- Failing to read a transaction is recoverable by re-reading; **inventing one
+  is not**, because nothing downstream can distinguish it from a real line.
+  The parser is deliberately strict in that direction and
+  `vm/rules/test_reconcile.py` holds it there.
+
 ## [1.16.0] - 2026-07-29
 
 ### Added
