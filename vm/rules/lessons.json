@@ -168,6 +168,26 @@
       "fix": "Exclude Memorandum/memo types and any voucher flagged ISDELETED, ISCANCELLED or ISOPTIONAL. Count went 10,135 -> 10,102.",
       "generalisation": "Passing an internal consistency check does not mean a record BELONGS in the dataset. Validity and relevance are different tests; ask 'should this be here at all' separately from 'is this well-formed'. Found only because the user asked what was missing rather than accepting a completeness claim.",
       "severity": "high"
+    },
+    {
+      "id": "L016",
+      "date": "2026-07-29",
+      "title": "XML numeric entity mistaken for a control character",
+      "what_happened": "Tally's synthetic root group arrives as the literal text '&#4; Primary'. Code stripped \\x00-\\x1f expecting a real control byte, which matched nothing, so every ledger walked up to the root: 61 of 66 unmapped and the whole balance sheet collapsed into one bucket.",
+      "root_cause": "Assumed the escape had been resolved into a byte. It had not - it was still five characters of text.",
+      "fix": "Strip numeric character references as text (&#\\d+;) before stripping control bytes; stop the group walk one level below the root.",
+      "generalisation": "When a name looks like it contains an escape, print its repr() before writing code against it. Assuming a decode step happened is how a parser silently matches nothing.",
+      "severity": "medium"
+    },
+    {
+      "id": "L017",
+      "date": "2026-07-29",
+      "title": "Double-counted profit in the balance sheet",
+      "what_happened": "The generated balance sheet was out by exactly the profit figure. The profit was added to Equity even though Tally's Reserve & Surplus closing balance already contains it.",
+      "root_cause": "Applied a textbook rule (carry profit to reserves) without checking whether the source had already applied it. The trial balance summing to zero on balance-sheet ledgers alone was the available evidence and it was overlooked.",
+      "fix": "Use Tally's Reserve & Surplus balance as-is; report profit only in the P&L.",
+      "generalisation": "A discrepancy EXACTLY equal to a figure already in play is almost always double-counting, not a missing entry. Check whether the source already did the step before doing it again.",
+      "severity": "high"
     }
   ]
 }
