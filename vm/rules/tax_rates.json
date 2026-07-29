@@ -1,0 +1,97 @@
+{
+  "_authority": "Income-tax Act. Rates verified against incometaxindia.gov.in and corroborated 29-07-2026.",
+  "_verified_on": "2026-07-29",
+  "_verify_before_use": "Corporate rates change with each Finance Act. RE-VERIFY before relying on this for a filing, and update _verified_on. Never compute tax from a stale rate card.",
+  "_scope": "Domestic companies only. Not applicable to LLPs, firms, or non-residents.",
+
+  "assessment_years": {
+    "2026-27": {
+      "financial_year": "2025-26",
+      "regimes": [
+        {
+          "id": "normal_25",
+          "name": "Normal rates — turnover up to ₹400 crore",
+          "condition": "Total turnover or gross receipts in the prescribed base year does not exceed ₹400 crore",
+          "base_rate": 25.0,
+          "surcharge_slabs": [
+            {"income_above": 0,          "income_upto": 10000000,   "rate": 0.0},
+            {"income_above": 10000000,   "income_upto": 100000000,  "rate": 7.0},
+            {"income_above": 100000000,  "income_upto": null,       "rate": 12.0}
+          ],
+          "cess": 4.0,
+          "mat_applicable": true,
+          "losses_allowed": true,
+          "note": "Carried-forward business losses and unabsorbed depreciation MAY be set off."
+        },
+        {
+          "id": "normal_30",
+          "name": "Normal rates — turnover above ₹400 crore",
+          "condition": "Turnover exceeds ₹400 crore",
+          "base_rate": 30.0,
+          "surcharge_slabs": [
+            {"income_above": 0,          "income_upto": 10000000,   "rate": 0.0},
+            {"income_above": 10000000,   "income_upto": 100000000,  "rate": 7.0},
+            {"income_above": 100000000,  "income_upto": null,       "rate": 12.0}
+          ],
+          "cess": 4.0,
+          "mat_applicable": true,
+          "losses_allowed": true
+        },
+        {
+          "id": "concessional_115BAA",
+          "name": "Concessional regime — s.115BAA",
+          "condition": "Company opts in by filing Form 10-IC. The option is IRREVOCABLE.",
+          "base_rate": 22.0,
+          "surcharge_flat": 10.0,
+          "cess": 4.0,
+          "effective_rate": 25.168,
+          "mat_applicable": false,
+          "losses_allowed": false,
+          "note": "CRITICAL: opting in requires forgoing specified deductions AND most carried-forward losses/unabsorbed depreciation attributable to those deductions. MAT does not apply, and any MAT CREDIT is forfeited. For a company with large carried-forward losses this can be far worse than the normal regime — model both before electing."
+        },
+        {
+          "id": "new_manufacturing_115BAB",
+          "name": "New manufacturing companies — s.115BAB",
+          "condition": "Incorporated on or after 01-10-2019 and commenced manufacturing by the prescribed date",
+          "base_rate": 15.0,
+          "surcharge_flat": 10.0,
+          "cess": 4.0,
+          "mat_applicable": false,
+          "losses_allowed": false,
+          "note": "Not applicable to a services company."
+        }
+      ],
+      "mat": {
+        "section": "115JB",
+        "rate_on_book_profit": 15.0,
+        "surcharge_slabs": [
+          {"income_above": 0,         "income_upto": 10000000,  "rate": 0.0},
+          {"income_above": 10000000,  "income_upto": 100000000, "rate": 7.0},
+          {"income_above": 100000000, "income_upto": null,      "rate": 12.0}
+        ],
+        "cess": 4.0,
+        "credit_carry_forward_years": 15,
+        "note": "MAT applies where normal tax is less than 15% of book profit. Book profit is computed under Explanation 1 to s.115JB and is NOT the same as accounting profit. MAT credit may be carried forward 15 years."
+      }
+    }
+  },
+
+  "common_disallowances": [
+    {"section": "40(a)(ia)", "description": "30% of specified payments where TDS was not deducted or not deposited by the due date of filing the return", "auto_detectable": "partly"},
+    {"section": "40(a)(ii)", "description": "Income tax paid, charged to P&L", "auto_detectable": "yes"},
+    {"section": "37(1)", "description": "Penalties and fines for breach of law (not compensatory interest)", "auto_detectable": "partly"},
+    {"section": "36(1)(va)", "description": "Employee PF/ESI contribution not deposited by the DUE DATE UNDER THE RELEVANT ACT — disallowed permanently (Checkmate Services, SC 2022)", "auto_detectable": "partly"},
+    {"section": "43B", "description": "Statutory dues (tax, duty, cess, PF employer contribution, bonus, leave encashment) allowed only on ACTUAL PAYMENT by the return due date", "auto_detectable": "partly"},
+    {"section": "43B(h)", "description": "Payments to micro and small enterprises beyond the MSMED time limit — disallowed until paid", "auto_detectable": "no"},
+    {"section": "14A", "description": "Expenditure relating to exempt income (Rule 8D)", "auto_detectable": "partly"},
+    {"section": "32", "description": "Depreciation under the Act differs from Companies Act depreciation — add back book depreciation, deduct tax depreciation on the block of assets", "auto_detectable": "partly"}
+  ],
+
+  "loss_carry_forward": {
+    "business_loss": {"section": "72", "years": 8, "note": "Set off against business income only. Requires the return to have been filed within the s.139(1) due date."},
+    "unabsorbed_depreciation": {"section": "32(2)", "years": null, "note": "May be carried forward indefinitely and set off against ANY head of income."},
+    "capital_loss_short_term": {"section": "74", "years": 8},
+    "capital_loss_long_term": {"section": "74", "years": 8, "note": "Set off against long-term capital gains only."},
+    "closely_held_company_restriction": {"section": "79", "note": "A company in which the public are not substantially interested loses carried-forward losses if beneficial shareholding carrying at least 51% of voting power changes. CHECK THIS if there has been any share transfer or buyback."}
+  }
+}

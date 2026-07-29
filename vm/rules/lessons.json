@@ -188,6 +188,16 @@
       "fix": "Use Tally's Reserve & Surplus balance as-is; report profit only in the P&L.",
       "generalisation": "A discrepancy EXACTLY equal to a figure already in play is almost always double-counting, not a missing entry. Check whether the source already did the step before doing it again.",
       "severity": "high"
+    },
+    {
+      "id": "L018",
+      "date": "2026-07-29",
+      "title": "'Needs a CA' used to excuse work that was merely hard",
+      "what_happened": "Depreciation, provisions, tax, notes and the audit opinion were excluded from the generated financials as a single group 'those need the CA'. The user challenged it. On examination, depreciation (Schedule II lives are published law), most notes (prescribed disaggregation tables), and current tax (law plus ledger data) were all computable. Only deferred tax, contingent liabilities, actuarial valuations, going concern and the audit opinion genuinely need judgement.",
+      "root_cause": "Collapsed five different things into one exclusion and presented a capability gap as a professional boundary. The real reason was that they are harder to build.",
+      "fix": "Built fixed_assets.py (Schedule II depreciation with per-asset workings), notes.py (Schedule III notes), tax_computation.py (disallowances + regime comparison). Each states exactly which inputs it cannot derive and leaves those blank.",
+      "generalisation": "When declining scope, name the specific blocker for each item. 'Needs an expert' covering several things at once is usually hiding at least one item that is merely difficult. The honest test: is the missing input a LAW, a LEDGER, or a BELIEF? Only beliefs need the human.",
+      "severity": "high"
     }
   ]
 }

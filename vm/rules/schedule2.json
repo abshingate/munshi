@@ -1,0 +1,114 @@
+{
+  "_authority": "Schedule II to the Companies Act, 2013 (Part C), as amended by MCA Notification G.S.R. 237(E) dated 31-03-2014 and subsequent amendments.",
+  "_effective_from": "2014-04-01",
+  "_verified_on": "2026-07-29",
+  "_note": "Schedule II prescribes USEFUL LIVES, not rates. Depreciation rates are derived from the life. A company may adopt a different life only with technical justification disclosed in the notes (Sch II Part A para 3). Residual value shall not normally exceed 5% of original cost (Part A para 5).",
+  "_verify_before_use": "Rates here are derived, not quoted. Re-verify against the current Schedule II text before relying on them for a filing. Amendments are notified by MCA and are not always widely reported.",
+
+  "residual_value_percent": 5.0,
+  "default_method": "WDV",
+
+  "_wdv_formula": "rate = 1 - (residual/cost)^(1/life). With 5% residual: rate = 1 - 0.05^(1/life).",
+
+  "assets": [
+    {
+      "class": "Buildings (other than factory), RCC frame structure",
+      "life_years": 60,
+      "wdv_rate": 4.87,
+      "slm_rate": 1.58,
+      "match": ["building", "office premises", "premises"]
+    },
+    {
+      "class": "Plant and Machinery (general)",
+      "life_years": 15,
+      "wdv_rate": 18.10,
+      "slm_rate": 6.33,
+      "match": ["plant", "machinery", "machine", "equipment (plant)"]
+    },
+    {
+      "class": "Furniture and fittings (general)",
+      "life_years": 10,
+      "wdv_rate": 25.89,
+      "slm_rate": 9.50,
+      "match": ["furniture", "fixture", "chair", "table", "shelf", "cabinet",
+                "recliner", "sofa", "desk", "almirah", "partition"]
+    },
+    {
+      "class": "Office equipment",
+      "life_years": 5,
+      "wdv_rate": 45.07,
+      "slm_rate": 19.00,
+      "match": ["office equipment", "invertor", "inverter", "air cooler",
+                "cooler", "air conditioner", "ac ", "printer (office)",
+                "projector", "camera", "heat machine", "cricut",
+                "lab enclosure", "water purifier", "refrigerator"]
+    },
+    {
+      "class": "Computers and data processing units — end user devices (desktops, laptops, printers)",
+      "life_years": 3,
+      "wdv_rate": 63.16,
+      "slm_rate": 31.67,
+      "match": ["computer", "laptop", "macbook", "mac book", "desktop",
+                "printer", "monitor", "ipad", "tablet", "mobile", "phone",
+                "galaxy", "iphone", "3d printer", "scanner"]
+    },
+    {
+      "class": "Computers and data processing units — servers and networks",
+      "life_years": 6,
+      "wdv_rate": 39.30,
+      "slm_rate": 15.83,
+      "match": ["server", "network", "router", "switch (network)", "firewall",
+                "nas", "storage array"]
+    },
+    {
+      "class": "Motor vehicles — motor cycles, scooters, other mopeds",
+      "life_years": 10,
+      "wdv_rate": 25.89,
+      "slm_rate": 9.50,
+      "match": ["motor cycle", "motorcycle", "scooter", "moped", "two wheeler"]
+    },
+    {
+      "class": "Motor vehicles — motor buses/lorries/cars used in a business of running them on hire",
+      "life_years": 6,
+      "wdv_rate": 39.30,
+      "slm_rate": 15.83,
+      "match": ["taxi", "vehicle on hire", "commercial vehicle"]
+    },
+    {
+      "class": "Motor vehicles — motor cars (other than those used in a business of running them on hire)",
+      "life_years": 8,
+      "wdv_rate": 31.23,
+      "slm_rate": 11.88,
+      "match": ["car", "motor car", "vehicle", "innova", "swift", "honda",
+                "hyundai", "maruti"]
+    },
+    {
+      "class": "Electrical installations and equipment",
+      "life_years": 10,
+      "wdv_rate": 25.89,
+      "slm_rate": 9.50,
+      "match": ["electrical", "wiring", "ups", "generator", "dg set",
+                "transformer"]
+    },
+    {
+      "class": "Laboratory equipment (general)",
+      "life_years": 10,
+      "wdv_rate": 25.89,
+      "slm_rate": 9.50,
+      "match": ["laboratory", "lab equipment"]
+    },
+    {
+      "class": "Intangible assets (software) — amortised over useful life; AS 26 / Ind AS 38",
+      "life_years": 3,
+      "wdv_rate": 63.16,
+      "slm_rate": 31.67,
+      "match": ["software", "licence", "license", "intangible"],
+      "note": "Schedule II does not prescribe a life for intangibles; AS 26 requires amortisation over useful life with a rebuttable presumption of 10 years. 3 years used here for software - MUST be confirmed."
+    }
+  ],
+
+  "unmatched_policy": {
+    "action": "flag",
+    "note": "An asset whose class cannot be determined from its ledger name is NEVER silently assigned a default. It is reported as UNCLASSIFIED for a human to assign, because a wrong life produces a wrong charge that still looks reasonable."
+  }
+}
