@@ -218,6 +218,16 @@
       "fix": "Net the block's accumulated depreciation off, apportioned across assets by cost, before applying a WDV rate. SLM correctly continues to charge on original cost.",
       "generalisation": "Check whether a balance is gross or net before computing on it. Two ledgers that must be read together are easy to read singly.",
       "severity": "medium"
+    },
+    {
+      "id": "L021",
+      "date": "2026-07-29",
+      "title": "'Costs roughly 0.00' understated a 95 lakh exposure",
+      "what_happened": "The s.79 scenario correctly showed 3.42 crore of loss forfeited, then reported the additional tax as 'roughly 0.00' because the company had no taxable income in the ten-year window to shelter. Read together, the two figures said 'losing 3.42 crore of losses costs nothing'.",
+      "root_cause": "Measured the cost only inside the modelled window. A forfeited loss costs tax in FUTURE profitable years, which the window did not contain.",
+      "fix": "When in-window tax difference is nil, compute and state the future shelter lost: 3.42 crore at 27.82% is about 95,26,764 of tax payable whenever the company returns to profit.",
+      "generalisation": "A cost of zero inside an arbitrary window is not a cost of zero. Before reporting 'no impact', ask whether the impact simply falls outside the period modelled - deferred is not absent.",
+      "severity": "high"
     }
   ]
 }
