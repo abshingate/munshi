@@ -213,6 +213,12 @@ def classify(led: dict, groups: dict) -> tuple:
     if root in BS_MAP:
         section, sub = BS_MAP[root]
         return ("BS", section, sub)
+    # Tally's built-in 'Profit & Loss A/c' sits directly under the root with no
+    # group of its own. It is the P&L result carried into the balance sheet, so
+    # it belongs with reserves — not in the unmapped list, where it would raise
+    # a false alarm on every year that has it.
+    if led["name"].strip().lower().startswith("profit & loss"):
+        return ("BS", "EQUITY AND LIABILITIES", "Shareholders' Funds")
     return ("BS", "UNMAPPED", f"UNMAPPED - Tally group '{root}'")
 
 
