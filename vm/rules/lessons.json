@@ -158,6 +158,16 @@
       "fix": "Pass LIKE patterns as bound parameters.",
       "generalisation": "Same family as L010/L011 — an empty result that felt like an answer. Any zero-row result on a question expected to have rows must be challenged before it is reported.",
       "severity": "medium"
+    },
+    {
+      "id": "L015",
+      "date": "2026-07-29",
+      "title": "Non-accounting voucher types were loaded into financial totals",
+      "what_happened": "33 Memorandum vouchers carrying Rs 5.9 crore were extracted and counted alongside real vouchers, inflating FY2016-17 to FY2018-19. They all passed the double-entry balance check, so no existing validation caught them.",
+      "root_cause": "The extractor took every voucher the gateway returned. Tally's Memorandum type is deliberately NON-ACCOUNTING - it never enters the books - and ISCANCELLED/ISOPTIONAL were likewise never checked.",
+      "fix": "Exclude Memorandum/memo types and any voucher flagged ISDELETED, ISCANCELLED or ISOPTIONAL. Count went 10,135 -> 10,102.",
+      "generalisation": "Passing an internal consistency check does not mean a record BELONGS in the dataset. Validity and relevance are different tests; ask 'should this be here at all' separately from 'is this well-formed'. Found only because the user asked what was missing rather than accepting a completeness claim.",
+      "severity": "high"
     }
   ]
 }

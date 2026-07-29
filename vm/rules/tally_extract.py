@@ -134,6 +134,12 @@ def parse_amount(s: str) -> float | None:
         return None
 
 
+# Tally voucher types that are NOT part of the books. Memorandum is the one
+# that matters here: it is designed for notes and provisional figures, and
+# Tally excludes it from all financial reports. Anything in this set must be
+# excluded from totals or it inflates them.
+NON_ACCOUNTING_TYPES = {"memorandum", "memo"}
+
 # Requires at least one attribute, so the response header's own
 # `<VOUCHER>0</VOUCHER>` counter tag cannot masquerade as a voucher. Real
 # vouchers always carry REMOTEID/VCHKEY/VCHTYPE.
@@ -149,7 +155,19 @@ def parse_vouchers(xml: str) -> list[dict]:
     out = []
     for m in VOUCHER_RE.finditer(xml):
         b = m.group(1)
-        if tag_text(b, "ISDELETED").upper() == "YES":
+        # Vouchers that must never reach financial totals:
+        #  - deleted
+        #  - cancelled (retains its number, carries no value)
+        #  - optional (entered but not activated — Tally excludes them itself)
+        #  - Memorandum (a deliberately NON-ACCOUNTING voucher type; Tally
+        #    keeps these out of the books entirely. 33 of them here carry
+        #    ₹5.9 crore, which silently inflated FY2016-17 to FY2018-19.)
+        if (tag_text(b, "ISDELETED").upper() == "YES"
+                or tag_text(b, "ISCANCELLED").upper() == "YES"
+                or tag_text(b, "ISOPTIONAL").upper() == "YES"):
+            continue
+        vtype = tag_text(b, "VOUCHERTYPENAME")
+        if vtype.strip().lower() in NON_ACCOUNTING_TYPES:
             continue
         d = parse_date(tag_text(b, "DATE"))
         if not d:
