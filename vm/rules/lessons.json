@@ -108,6 +108,56 @@
       "verified": "cross_check() against the FY2025-26 statement reports the two missing payments by name",
       "outcome_2026_07_29": "RESOLVED by using a real table extractor. pdfplumber recovers the statement's actual ruled table with clean columns, giving 299 transactions (matching the count the existing reconciliation engine independently handled for this year), all with balances, and cross_check() reporting ALL FOUND. The coordinate approach is retained only as a fallback for PDFs with no recoverable table, and is documented as assistive.",
       "general_lesson": "Balance continuity proves internal consistency, not completeness. Only checking for transactions you already know exist catches a silently incomplete extraction. Equally: reach for the right library before hand-rolling geometry — four rounds of heuristic tuning were spent on a problem pdfplumber solves outright."
+    },
+    {
+      "id": "L010",
+      "date": "2026-07-29",
+      "title": "Tally report IDs silently ignore the requested date range",
+      "what_happened": "A 'Day Book' export returned byte-identical output (850,261 chars) for all eleven financial years. Querying one bank ledger this way suggested ~96 vouchers existed across a decade, and a written finding claimed '97% of bank transactions are unrecorded'.",
+      "root_cause": "Tally answers from its CURRENT PERIOD. SVFROMDATE/SVTODATE on a report ID are advisory; the loaded period wins.",
+      "fix": "Use a Collection with SVCURRENTCOMPANY + SVCURRENTDATE alongside SVFROMDATE/SVTODATE. FY2019-20 then returned 3,106 vouchers instead of 0. Full extract: 10,135 vouchers.",
+      "generalisation": "Identical output sizes across different query parameters means the parameter is being ignored. Always vary an input and confirm the output varies before trusting a negative result.",
+      "severity": "high"
+    },
+    {
+      "id": "L011",
+      "date": "2026-07-29",
+      "title": "An absent finding was published as a finding",
+      "what_happened": "'~3% of bank transactions are recorded in Tally' was written into a verification document and framed as confirming a pattern of poor bookkeeping. It was a query artefact; the books hold 10,135 balanced vouchers.",
+      "root_cause": "An empty/small result was interpreted as evidence of absence in the world, rather than as possible evidence of a broken query. Three caveats were listed but the headline number was still asserted.",
+      "fix": "Retracted in TALLY-VS-BANK-FIRST-PASS.md. Before reporting that something is MISSING, positively verify the retrieval path works by finding something known to exist.",
+      "generalisation": "Absence of evidence from a tool is first a claim about the tool. Accusations about records demand a working reader before they are made.",
+      "severity": "high"
+    },
+    {
+      "id": "L012",
+      "date": "2026-07-29",
+      "title": "abs() on amounts broke 22 genuine vouchers",
+      "what_happened": "22 vouchers failed the double-entry check. They looked like data-quality problems in the books.",
+      "root_cause": "Tally records contra lines as a NEGATIVE amount on a side (e.g. forex revaluation: a -11,204.00 credit). Taking abs() turned a subtraction into an addition.",
+      "fix": "Preserve sign when the AMOUNT sign disagrees with ISDEEMEDPOSITIVE. All 10,135 vouchers then balanced.",
+      "generalisation": "A validation failure is a bug in the validator until proven otherwise. Do not report the source data as faulty until the reader is proven correct.",
+      "severity": "medium"
+    },
+    {
+      "id": "L013",
+      "date": "2026-07-29",
+      "title": "Substring vendor search merged four unrelated vendors",
+      "what_happened": "Searching 'ARTH' returned Kritarth Consulting, Parth Cooling Solutions and Siddharth Enterprises alongside ARTH & Associates, inflating that vendor's totals.",
+      "root_cause": "ILIKE '%term%' has no word boundary.",
+      "fix": "Word-boundary regex (\\m...\\M), with substring hits offered only as 'did you mean'.",
+      "generalisation": "For money totals attributed to a named party, a loose match is worse than no match: it produces a confident wrong number.",
+      "severity": "medium"
+    },
+    {
+      "id": "L014",
+      "date": "2026-07-29",
+      "title": "A literal % in SQL was eaten as a psycopg placeholder",
+      "what_happened": "The 'tds' command reported no TDS ledgers at all, while TDS - PROFESSIONAL FEES plainly existed with hundreds of entries.",
+      "root_cause": "ILIKE '%TDS%' written inline; psycopg treats % as parameter interpolation.",
+      "fix": "Pass LIKE patterns as bound parameters.",
+      "generalisation": "Same family as L010/L011 — an empty result that felt like an answer. Any zero-row result on a question expected to have rows must be challenged before it is reported.",
+      "severity": "medium"
     }
   ]
 }
