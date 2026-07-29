@@ -1,0 +1,75 @@
+{
+  "description": "Professional advice received, recorded so that a disagreement with the statute is visible rather than silent — and so that reliance on advice is provable if it later proves wrong.",
+  "why_record_advice": [
+    "A conflict between advice and the rules should be a decision the operator makes knowingly, not one that passes unnoticed.",
+    "Where advice turns out to be wrong, a contemporaneous record of having relied on it in good faith matters — for penalty proceedings, and for deciding whether to keep the adviser.",
+    "An adviser may be right for reasons the rule set does not encode. 'Conflict' means look at this, never 'the adviser is wrong'."
+  ],
+  "how_to_add": "Record the advice verbatim where possible, with date, adviser and source. Add a `claim` only where the advice makes a machine-checkable assertion; otherwise leave it out and the entry is kept for the audit trail alone.",
+
+  "advice": [
+    {
+      "id": "A001",
+      "date": "2026-01-29",
+      "advisor": "ARTH & Associates (TDS team)",
+      "source": "email, thread 'Exadatum_26Q_Q3 FY 2025-26', 09:58 UTC",
+      "subject": "TDS on ARTH's own audit fee — first position",
+      "advice": "The TDS liability u/s 194J arises for the professional fees paid in excess of Rs. 50,000/-. Hence, in this case, there is TDS payable of Rs. 12,500/- along with interest of Rs. 750/-. Request you to kindly pay this amount to facilitate the filing of return.",
+      "claim": {
+        "kind": "tds-applies",
+        "rule_id": "tds-professional-fees",
+        "amount": 125000,
+        "on_date": "2026-04-01",
+        "advised_applies": true,
+        "advised_amount": 12500
+      },
+      "outcome": "Withdrawn 73 minutes later — see A002.",
+      "note": "This position is correct and matches the encoded rule exactly."
+    },
+    {
+      "id": "A002",
+      "date": "2026-01-29",
+      "advisor": "ARTH & Associates (TDS team)",
+      "source": "email, same thread, 11:11 UTC — 73 minutes after A001",
+      "subject": "TDS on ARTH's own audit fee — position withdrawn",
+      "advice": "As discussed over the phone, please ignore the previous email. Tax is not deducted since the company already has significant accumulated losses of this expense will not have a material impact.",
+      "claim": {
+        "kind": "assertion",
+        "contradicts_rule": true,
+        "rule_position": "Accumulated losses do not remove a deductor's liability. Losses bear on the s.40(a)(ia) disallowance of the expense; the obligation to deduct and deposit under s.194J, and liability as assessee-in-default under s.201, are unaffected by either party's profitability.",
+        "authority": "Income-tax Act 2025 s.393(1) (old s.194J); s.201; s.40(a)(ia)",
+        "why": "Two distinct consequences of non-deduction were conflated: the disallowance (which losses do affect) and the deductor's primary liability (which they do not). Note also that the adviser was the payee of the fee in question."
+      },
+      "outcome": "Followed at the time. The ₹12,500 remains undeposited and interest has accrued since 07-11-2025.",
+      "note": "The conflict this whole mechanism exists to surface. Recorded as lesson L003."
+    },
+    {
+      "id": "A003",
+      "date": "2025-10-03",
+      "advisor": "ARTH & Associates (Ankush Mane, Partner)",
+      "source": "email accompanying invoice ARTH 371, FY 2024-25 statutory audit",
+      "subject": "Request not to deduct TDS on their invoice",
+      "advice": "Please note that since we have accumulated losses so no TDS was considered on this invoice and hence request to consider the full gross amount for release without deducting TDS.",
+      "claim": {
+        "kind": "assertion",
+        "contradicts_rule": true,
+        "rule_position": "A payee's accumulated losses are not a ground for non-deduction. Only a certificate under s.197 (lower or nil deduction) authorises paying gross, and none was produced.",
+        "authority": "Income-tax Act 2025 s.393(1) (old s.194J); s.197",
+        "why": "A written request from the payee to skip a statutory deduction, on grounds that have no basis in the section."
+      },
+      "outcome": "Complied with — ₹1,47,500 paid gross on 13-10-2025, no TDS deducted.",
+      "note": "Same reasoning as A002, offered three months earlier and in writing."
+    },
+    {
+      "id": "A004",
+      "date": "2026-04-28",
+      "advisor": "ARTH & Associates (Nidhi)",
+      "source": "email thread 'Form 16'",
+      "subject": "Why no Form 16 existed for FY 2024-25",
+      "advice": "When filing the individual ITRs for FY 2024-25, we discussed that Form 16 was unavailable because the tax was not deducted. Furthermore, 30% of the salary expense was disallowed in the...",
+      "claim": null,
+      "outcome": "Recorded for the audit trail.",
+      "note": "Not a machine-checkable claim, but evidence that the same reasoning — accept the 30% disallowance instead of deducting — was applied to salary TDS as well, not only to the adviser's own fee. Relevant context for any assessment of the pattern."
+    }
+  ]
+}

@@ -4,6 +4,35 @@ All notable changes to this project are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 versioning: [SemVer](https://semver.org/).
 
+## [1.19.0] - 2026-07-29
+
+### Added
+
+- **Advisor cross-check** (`vm/rules/crosscheck.py`, `advice.json`): records
+  professional advice and flags where it disagrees with the encoded rules.
+  **It does not decide who is right.** An adviser may know something the rule
+  set does not; the output says so explicitly. What it prevents is a
+  disagreement passing unnoticed.
+  - Two reasons to record advice: a conflict becomes a decision made
+    knowingly rather than by default, and reliance on advice that later
+    proves wrong is provable — which matters in penalty proceedings.
+  - Advice with no machine-checkable claim is kept for the audit trail and
+    explicitly *not* judged.
+  - Exits non-zero when a conflict stands, so it can gate a workflow.
+  - Seeded with the real case: an adviser's tax team computed ₹12,500 of TDS
+    at 09:58, then withdrew it at 11:11 — 73 minutes later — on the ground
+    that the company had accumulated losses. Losses bear on the s.40(a)(ia)
+    disallowance, not on the deductor's liability under s.201. The register
+    records both positions, and the checker confirms the first agrees with
+    the rules and the second conflicts.
+
+### Notes
+
+- Completes the six phases in `docs/compliance-safety-net.md` except phase 4
+  (assisted data entry, ADR-0021), which is deliberately unbuilt pending
+  approval — it types into government portals and its human-approval gates
+  are security properties.
+
 ## [1.18.0] - 2026-07-29
 
 ### Added
