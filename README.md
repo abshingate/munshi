@@ -40,7 +40,7 @@ flowchart LR
 
 | | |
 |---|---|
-| Machine | Windows Server 2022, t3.large (2 vCPU / 8 GB), 100 GB encrypted disk, Mumbai (`ap-south-1`) |
+| Machine | Windows Server 2022, t3.large (2 vCPU / 8 GB), 100 GB encrypted disk (grow via `volume_size_gb`), Mumbai (`ap-south-1`) |
 | Access | **Browser** via Amazon DCV (`https://<ip>:8443`), or RDP, or AWS Console → Fleet Manager |
 | Stable address (optional) | Own a domain on Route 53? Set `dns_hostname = "tally.example.com"` and the VM updates that DNS record itself at every boot — one permanent address for the desktop, the AI app and RDP, no Elastic IP needed (ADR-0018) |
 | Pre-installed | Chrome, Adobe Reader, 7-Zip, Notepad++, **Java 8 (32-bit + 64-bit — required by GST emSigner / TRACES WebSigner)**, **Google Drive sync** (via rclone — the official client doesn't support Windows Server, ADR-0015; one-time sign-in button, then `C:\TallyData\Drive` ↔ your Drive's `TallyCloud` folder every 5 min), Amazon DCV, IST timezone, desktop shortcuts for GST / Income-tax / TRACES / EPFO / ESIC / MCA portals and DSC utilities |
@@ -311,6 +311,30 @@ never contains anything account-specific or secret.
 | 100 GB gp3 disk (always) | ~$9/month |
 | Daily snapshots | < $1/month |
 | **Total** | **~$10–12/month** |
+
+**Disk is the item that surprises people.** EBS is billed on the size you
+*provision*, not the size you use, and it is billed **while the instance is
+stopped** — unlike compute, switching the machine off does not reduce it. So
+`volume_size_gb` is the main lever on the standing monthly cost:
+
+| Volume | Storage cost |
+|---|---|
+| 100 GB (default) | ~$9/month |
+| 200 GB | ~$18/month |
+| 300 GB | ~$27/month |
+
+A volume can only ever be **grown, never shrunk**, so start small. Growing it
+is safe and needs no downtime: `terraform apply` resizes the volume in place
+(no instance replacement), then the Windows partition must be extended
+separately — EBS growth alone is invisible to the OS:
+
+```powershell
+"rescan" | diskpart
+$max = Get-PartitionSupportedSize -DiskNumber 0 -PartitionNumber 1
+Resize-Partition -DiskNumber 0 -PartitionNumber 1 -Size $max.SizeMax
+```
+
+The disk is MBR, which caps it at 2 TB.
 
 ## Where this is going
 
