@@ -261,12 +261,24 @@ def extract_single_line_format(pdf_path: Path) -> tuple[list[dict], str | None]:
                 if not amounts:
                     continue
 
-                # 'B/F' carries only the opening balance, no movement.
                 rest = line[m.end():]
-                if re.match(r"\s*B/F\b", rest, re.I):
+                # Opening-balance lines carry no movement.
+                if re.match(r"\s*(B/F|Balance Brought Forward)\b", rest, re.I):
                     continue
 
-                if len(amounts) >= 2:
+                # ICICI marks the running balance with a Dr/Cr indicator that
+                # sits BETWEEN the movement and the balance:
+                #     "... 1,103.00 Cr 12,15,197.99 01-09-2016 BRANCH"
+                # Taking "the last two figures" fails whenever a trailing
+                # date or reference follows the balance, and silently swaps
+                # movement and balance on credit lines. Anchor on the
+                # indicator instead — it is unambiguous where present.
+                marked = re.search(
+                    r"([\d,]+\.\d{2})\s*(Dr|Cr)\s*([\d,]+\.\d{2})", rest, re.I)
+                if marked:
+                    movement = parse_amount(marked.group(1))
+                    balance = parse_amount(marked.group(3))
+                elif len(amounts) >= 2:
                     movement, balance = amounts[-2], amounts[-1]
                 else:
                     movement, balance = amounts[0], None
