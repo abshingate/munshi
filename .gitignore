@@ -14,3 +14,7 @@ vm/app/package-lock.json
 # Python
 __pycache__/
 *.py[cod]
+
+# GCP service-account keys - NEVER commit (standing rule)
+abshingate-exadatum-website-*.json
+*website-421903*.json
